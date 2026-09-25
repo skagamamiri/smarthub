@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Permainan Interaktif SK Agama (MIS) Miri</title>
+    <title>SMART HUB — Pusat Pembelajaran Digital SK Agama (MIS) Miri</title>
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -108,10 +108,10 @@
                     <div>
                         <div class="flex items-center gap-2">
                             <span class="bg-yellow-400 text-emerald-950 font-black text-[10px] uppercase px-2 py-0.5 rounded-full tracking-wider shadow-sm">Sarawak</span>
-                            <span class="text-xs font-semibold text-emerald-700">SK Agama (MIS) Miri</span>
+                            <span class="text-xs font-semibold text-emerald-700">Pusat Pembelajaran Digital SK Agama (MIS) Miri</span>
                         </div>
                         <h1 class="text-xl sm:text-2xl font-black font-display text-emerald-900 leading-tight">
-                            SKAMIS <span class="text-sk-gold">Arcade</span>
+                            SMART <span class="text-sk-gold">HUB</span>
                         </h1>
                     </div>
                 </div>
@@ -233,65 +233,106 @@
         </section>
 
         <!-- ========================================== -->
-        <!-- ZON GURU (TEACHER STUDIO & HTML INSERTER)  -->
+        <!-- PUSAT SUMBER PEMBELAJARAN                   -->
+        <!-- ========================================== -->
+        <section id="resourceSection" class="space-y-6">
+            <div class="bg-white rounded-3xl shadow-md border-2 border-emerald-100 p-5 sm:p-6">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <span class="bg-emerald-100 text-emerald-800 font-black text-xs uppercase px-3 py-1 rounded-full">Pusat Sumber Digital</span>
+                        <h2 class="text-2xl sm:text-3xl font-black font-display text-slate-800 mt-2">Bahan Pembelajaran SKAMIS</h2>
+                        <p class="text-sm text-slate-500 mt-1">Akses buku, video, latihan dan bahan rujukan yang dikongsi oleh guru.</p>
+                    </div>
+                    <div class="relative w-full lg:w-96">
+                        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input id="resourceSearch" oninput="renderResources()" placeholder="Cari bahan pembelajaran..." class="w-full pl-11 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-sk-emerald focus:outline-none">
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2 mt-5" id="resourceCategoryFilters">
+                    <button onclick="setResourceCategory('Semua')" data-resource-cat="Semua" class="resource-cat active px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-black">Semua</button>
+                    <button onclick="setResourceCategory('Buku Teks')" data-resource-cat="Buku Teks" class="resource-cat px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">📚 Buku Teks</button>
+                    <button onclick="setResourceCategory('Buku Aktiviti')" data-resource-cat="Buku Aktiviti" class="resource-cat px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">📘 Buku Aktiviti</button>
+                    <button onclick="setResourceCategory('Video')" data-resource-cat="Video" class="resource-cat px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">🎬 Video</button>
+                    <button onclick="setResourceCategory('Latihan')" data-resource-cat="Latihan" class="resource-cat px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">📝 Latihan</button>
+                    <button onclick="setResourceCategory('Rujukan')" data-resource-cat="Rujukan" class="resource-cat px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">📖 Rujukan</button>
+                </div>
+            </div>
+            <div id="resourcesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+            <div id="resourceEmpty" class="hidden bg-white rounded-3xl border-2 border-dashed border-slate-200 p-12 text-center">
+                <div class="text-5xl mb-3">📚</div><h3 class="font-display text-xl font-bold text-slate-700">Belum ada bahan</h3>
+                <p class="text-sm text-slate-500 mt-1">Guru boleh menambah bahan melalui Zon Guru.</p>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- ZON GURU                                -->
         <!-- ========================================== -->
         <section id="zonGuruSection" class="hidden space-y-6">
-            
-            <!-- Teacher Header Banner -->
-            <div class="bg-slate-900 text-white p-6 sm:p-8 rounded-3xl shadow-xl relative overflow-hidden border-b-4 border-sk-gold">
-                <div class="absolute right-0 top-0 bottom-0 w-1/3 opacity-10 bg-repeat pointer-events-none" style="background-image: radial-gradient(#f59e0b 2px, transparent 2px); background-size: 16px 16px;"></div>
-                <div class="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <span class="bg-sk-gold text-slate-950 font-black text-xs uppercase px-3 py-1 rounded-full">Studio Pengurusan Guru</span>
-                        <h2 class="text-2xl sm:text-3xl font-black font-display mt-2">Bilik Kawalan Permainan HTML</h2>
-                        <p class="text-slate-300 text-sm mt-1">Masukkan kod HTML tunggal permainan interaktif (termasuk CSS/JS internal) untuk disiarkan kepada murid.</p>
-                    </div>
-                    
-                    <div class="flex flex-wrap gap-2">
-                        <button onclick="openAddGameModal()" class="px-4 py-2.5 bg-sk-emerald hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg transition flex items-center gap-2 text-sm">
-                            <i class="fa-solid fa-plus-circle"></i> Tambah Permainan
-                        </button>
-                        <button onclick="exportGamesJSON()" class="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl border border-slate-700 text-xs transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-download"></i> Eksport JSON
-                        </button>
-                        <label class="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl border border-slate-700 text-xs transition flex items-center gap-1.5 cursor-pointer">
-                            <i class="fa-solid fa-upload"></i> Import JSON
-                            <input type="file" id="importJsonInput" accept=".json" onchange="importGamesJSON(event)" class="hidden">
-                        </label>
-                    </div>
+            <div id="teacherLoginPanel" class="bg-slate-900 text-white rounded-3xl shadow-xl p-6 sm:p-8 border-b-4 border-sk-gold">
+                <span class="bg-sk-gold text-slate-950 font-black text-xs uppercase px-3 py-1 rounded-full">Kawasan Guru</span>
+                <h2 class="text-2xl sm:text-3xl font-black font-display mt-3">Log Masuk Guru</h2>
+                <p class="text-slate-300 text-sm mt-1 mb-5">Gunakan akaun Supabase Auth untuk mengurus bahan pembelajaran dan permainan.</p>
+                <div class="grid sm:grid-cols-2 gap-3 max-w-2xl">
+                    <input id="teacherEmail" type="email" placeholder="Email guru" class="p-3 rounded-xl text-slate-800 outline-none">
+                    <input id="teacherPassword" type="password" placeholder="Kata laluan" class="p-3 rounded-xl text-slate-800 outline-none">
                 </div>
+                <div class="flex flex-wrap gap-2 mt-3">
+                    <button onclick="teacherLogin()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-black text-sm">🔐 Log Masuk</button>
+                    <button onclick="teacherSignup()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl font-bold text-sm">Daftar Akaun</button>
+                </div>
+                <p id="authMessage" class="text-xs mt-3 text-slate-300"></p>
             </div>
 
-            <!-- Teacher Games Table / Management Cards -->
-            <div class="bg-white rounded-3xl shadow-md border-2 border-slate-200 overflow-hidden">
-                <div class="p-5 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-                    <h3 class="font-extrabold font-display text-slate-800 text-lg flex items-center gap-2">
-                        <i class="fa-solid fa-list-check text-sk-emerald"></i> Senarai Permainan Guru
-                    </h3>
-                    <span class="text-xs font-bold text-slate-500">Disimpan dalam LocalStorage Browser</span>
+            <div id="teacherDashboard" class="hidden space-y-6">
+                <div class="bg-white rounded-3xl shadow-md border-2 border-emerald-100 p-5 flex flex-col sm:flex-row justify-between gap-3 sm:items-center">
+                    <div><span class="text-xs font-black text-emerald-700 uppercase">Guru disahkan</span><h3 id="teacherIdentity" class="font-display text-xl font-bold text-slate-800">Akaun Guru</h3></div>
+                    <button onclick="teacherLogout()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm">Log Keluar</button>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-100 text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
-                                <th class="p-4">Ikon & Tajuk</th>
-                                <th class="p-4">Mata Pelajaran</th>
-                                <th class="p-4">Sasaran Tahun</th>
-                                <th class="p-4">Tarikh Ditambah</th>
-                                <th class="p-4 text-center">Tindakan</th>
-                            </tr>
-                        </thead>
-                        <tbody id="teacherGamesTableBody" class="divide-y divide-slate-100 text-sm font-medium text-slate-700">
-                            <!-- Dynamic Table Rows via JS -->
-                        </tbody>
-                    </table>
+                <div class="grid lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-3xl shadow-md border-2 border-slate-200 p-5">
+                        <h3 class="font-display text-xl font-black text-slate-800">➕ Tambah Bahan Pembelajaran</h3>
+                        <form id="resourceForm" onsubmit="saveResource(event)" class="space-y-3 mt-4">
+                            <input id="resourceTitle" required placeholder="Tajuk bahan" class="w-full p-3 border-2 border-slate-200 rounded-xl">
+                            <div class="grid grid-cols-2 gap-3">
+                                <select id="resourceCategory" class="p-3 border-2 border-slate-200 rounded-xl"><option>Buku Teks</option><option>Buku Aktiviti</option><option>Video</option><option>Latihan</option><option>Rujukan</option></select>
+                                <select id="resourceYear" class="p-3 border-2 border-slate-200 rounded-xl"><option value="">Semua Tahun</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
+                            </div>
+                            <input id="resourceSubject" placeholder="Mata pelajaran (contoh: Matematik)" class="w-full p-3 border-2 border-slate-200 rounded-xl">
+                            <textarea id="resourceDescription" rows="3" placeholder="Penerangan ringkas" class="w-full p-3 border-2 border-slate-200 rounded-xl"></textarea>
+                            <input id="resourceExternalUrl" type="url" placeholder="Pautan luar (Google Drive/YouTube/dll.) — pilihan" class="w-full p-3 border-2 border-slate-200 rounded-xl">
+                            <div class="border-2 border-dashed border-emerald-200 rounded-xl p-4 bg-emerald-50">
+                                <label class="text-xs font-black text-emerald-800">ATAU upload fail</label>
+                                <input id="resourceFile" type="file" class="w-full mt-2 text-sm">
+                                <p class="text-[11px] text-slate-500 mt-1">PDF, gambar, video dan fail pembelajaran.</p>
+                            </div>
+                            <button class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black">Simpan Bahan</button>
+                        </form>
+                    </div>
+
+                    <div class="bg-white rounded-3xl shadow-md border-2 border-slate-200 p-5">
+                        <div class="flex justify-between items-center gap-2"><h3 class="font-display text-xl font-black text-slate-800">🎮 Permainan HTML</h3><button onclick="openAddGameModal()" class="px-3 py-2 bg-emerald-600 text-white rounded-xl text-xs font-black">Tambah</button></div>
+                        <p class="text-xs text-slate-500 mt-1">Permainan disimpan di Supabase dan boleh dimainkan pada semua smartboard.</p>
+                        <div class="overflow-x-auto mt-4"><table class="w-full text-left text-sm"><tbody id="teacherGamesTableBody"></tbody></table></div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl shadow-md border-2 border-slate-200 p-5">
+                    <div class="flex justify-between items-center"><h3 class="font-display text-xl font-black text-slate-800">📚 Bahan Yang Telah Ditambah</h3><button onclick="loadResourcesFromSupabase()" class="text-xs font-bold text-emerald-700">↻ Segar</button></div>
+                    <div id="teacherResourcesList" class="mt-4 space-y-2"></div>
                 </div>
             </div>
-
         </section>
 
     </main>
+
+    <!-- RESOURCE VIEW MODAL -->
+    <div id="resourceModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-6xl h-[90vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col">
+            <div class="bg-slate-900 text-white p-4 flex justify-between items-center"><h3 id="resourceModalTitle" class="font-display text-lg font-black">Bahan</h3><button onclick="closeResourceModal()" class="text-2xl">×</button></div>
+            <iframe id="resourceViewer" class="w-full flex-1 bg-slate-100" title="Paparan bahan"></iframe>
+        </div>
+    </div>
 
     <!-- ========================================== -->
     <!-- MODAL: GAME PLAYER (IFRAME CONTAINMENT)   -->
@@ -779,13 +820,13 @@
         }
 
         async function saveGameToSupabase(game) {
-            if (!supabaseClient) return;
-            const payload = {
-                title: game.title, subject: game.subject, year: Number(game.year), emoji: game.emoji || '🎮',
-                description: game.desc || '', html_code: game.htmlCode || ''
-            };
-            const { error } = await supabaseClient.from('games').upsert(game.id && game.id.includes('-') && game.id.length > 20 ? {id: game.id, ...payload} : payload);
-            if (error) console.warn('Gagal simpan permainan ke Supabase:', error);
+            if (!supabaseClient || !teacherUser) return null;
+            const payload = { title: game.title, subject: game.subject, year: Number(game.year), emoji: game.emoji || '🎮', description: game.desc || '', html_code: game.htmlCode || '' };
+            let result;
+            if (game.id && game.id.length === 36 && game.id.includes('-')) result = await supabaseClient.from('games').update(payload).eq('id', game.id).select().single();
+            else result = await supabaseClient.from('games').insert(payload).select().single();
+            if (result.error) { console.warn('Gagal simpan permainan ke Supabase:', result.error); return null; }
+            return result.data;
         }
 
         async function deleteGameFromSupabase(id) {
@@ -811,10 +852,17 @@
             initSupabase();
             initData();
             await loadGamesFromSupabase();
+            await loadResourcesFromSupabase();
             renderSubjectFilters();
             renderMuridArcade();
             renderTeacherTable();
             updateStarDisplay();
+            if (supabaseClient) {
+                const { data } = await supabaseClient.auth.getSession();
+                teacherUser = data.session?.user || null;
+                updateTeacherUI();
+                supabaseClient.auth.onAuthStateChange((_event, session) => { teacherUser = session?.user || null; updateTeacherUI(); });
+            }
         });
 
         function initData() {
@@ -1097,7 +1145,7 @@
             document.getElementById('gameFormModal').classList.add('hidden');
         }
 
-        function saveGame(event) {
+        async function saveGame(event) {
             event.preventDefault();
 
             const id = document.getElementById('formGameId').value;
@@ -1135,8 +1183,10 @@
             }
 
             saveGamesToStorage();
-            const saved = gamesList.find(g => g.id === (id || gamesList[0]?.id));
-            if (saved) await saveGameToSupabase(saved);
+            if (teacherUser) {
+                const saved = gamesList.find(g => g.id === (id || gamesList[0]?.id));
+                if (saved) { const remote = await saveGameToSupabase(saved); if (remote && !id) { saved.id = remote.id; saved.createdAt = new Date(remote.created_at).toLocaleDateString('ms-MY'); } }
+            }
             renderMuridArcade();
             renderTeacherTable();
             closeGameFormModal();
@@ -1158,11 +1208,11 @@
             document.getElementById('gameFormModal').classList.remove('hidden');
         }
 
-        function deleteGame(id) {
+        async function deleteGame(id) {
             if (confirm('Adakah anda pasti ingin menghapus permainan ini?')) {
                 gamesList = gamesList.filter(g => g.id !== id);
                 saveGamesToStorage();
-                await deleteGameFromSupabase(id);
+                if (teacherUser) await deleteGameFromSupabase(id);
                 renderMuridArcade();
                 renderTeacherTable();
                 showToast('Permainan telah dihapuskan.');
@@ -1203,6 +1253,127 @@
                 }
             };
             reader.readAsText(file);
+        }
+
+        /* ========================================== */
+        /* SMART HUB RESOURCE + AUTH                 */
+        /* ========================================== */
+        let resourcesList = [];
+        let activeResourceCategory = 'Semua';
+        let teacherUser = null;
+
+        async function loadResourcesFromSupabase() {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.from('resources').select('*').order('created_at', { ascending: false });
+            if (error) { console.warn(error); showToast('Gagal memuat bahan dari Supabase.'); return; }
+            resourcesList = data || [];
+            renderResources();
+            renderTeacherResources();
+        }
+
+        function setResourceCategory(cat) {
+            activeResourceCategory = cat;
+            document.querySelectorAll('.resource-cat').forEach(b => {
+                const active = b.dataset.resourceCat === cat;
+                b.className = active ? 'resource-cat active px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-black' : 'resource-cat px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold';
+            });
+            renderResources();
+        }
+
+        function renderResources() {
+            const grid = document.getElementById('resourcesGrid'); if (!grid) return;
+            const q = (document.getElementById('resourceSearch')?.value || '').toLowerCase().trim();
+            const list = resourcesList.filter(r => {
+                const cat = activeResourceCategory === 'Semua' || r.category === activeResourceCategory;
+                const text = `${r.title||''} ${r.subject||''} ${r.description||''}`.toLowerCase();
+                return cat && text.includes(q);
+            });
+            grid.innerHTML = '';
+            document.getElementById('resourceEmpty').classList.toggle('hidden', list.length !== 0);
+            list.forEach(r => {
+                const icon = ({'Buku Teks':'📚','Buku Aktiviti':'📘','Video':'🎬','Latihan':'📝','Rujukan':'📖'})[r.category] || '📚';
+                const card=document.createElement('div');
+                card.className='bg-white rounded-3xl p-5 border-2 border-emerald-100 shadow-md hover:shadow-xl hover:-translate-y-1 transition flex flex-col';
+                const target = r.external_url || r.file_url;
+                card.innerHTML=`<div class="flex justify-between items-start"><div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-2xl">${icon}</div><span class="text-[10px] font-black px-2 py-1 rounded-full bg-slate-100 text-slate-600">${r.category}</span></div>
+                <div class="mt-4"><span class="text-[10px] font-black uppercase text-emerald-700">${r.subject || 'Umum'}</span><h3 class="font-display font-black text-lg text-slate-800">${escapeHtml(r.title)}</h3><p class="text-xs text-slate-500 mt-2 line-clamp-3">${escapeHtml(r.description || 'Bahan pembelajaran digital SKAMIS.')}</p></div>
+                <div class="mt-auto pt-4"><button onclick="openResource('${r.id}')" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs">Buka Bahan ↗</button></div>`;
+                grid.appendChild(card);
+            });
+        }
+
+        function openResource(id) {
+            const r=resourcesList.find(x=>x.id===id); if(!r) return;
+            const url=r.external_url || r.file_url; if(!url) return showToast('Bahan ini belum mempunyai pautan.');
+            document.getElementById('resourceModalTitle').innerText=r.title;
+            const viewer=document.getElementById('resourceViewer');
+            if (/youtube\.com|youtu\.be/.test(url)) {
+                let embed=url.replace('watch?v=','embed/').replace('youtu.be/','www.youtube.com/embed/');
+                viewer.src=embed;
+            } else viewer.src=url;
+            document.getElementById('resourceModal').classList.remove('hidden');
+        }
+        function closeResourceModal(){document.getElementById('resourceViewer').src='';document.getElementById('resourceModal').classList.add('hidden');}
+        function escapeHtml(v){return String(v||'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+
+        async function teacherLogin(){
+            const email=document.getElementById('teacherEmail').value.trim(), password=document.getElementById('teacherPassword').value;
+            if(!email||!password) return setAuthMessage('Sila masukkan email dan kata laluan.');
+            const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+            if(error) return setAuthMessage(error.message,true);
+            teacherUser=data.user; updateTeacherUI(); setAuthMessage('Log masuk berjaya.');
+        }
+        async function teacherSignup(){
+            const email=document.getElementById('teacherEmail').value.trim(), password=document.getElementById('teacherPassword').value;
+            if(!email||!password) return setAuthMessage('Masukkan email dan kata laluan untuk daftar.');
+            const {data,error}=await supabaseClient.auth.signUp({email,password});
+            if(error) return setAuthMessage(error.message,true);
+            setAuthMessage(data.session ? 'Akaun berjaya didaftarkan dan anda telah log masuk.' : 'Akaun berjaya dibuat. Semak email jika pengesahan email diperlukan.');
+            if(data.session){teacherUser=data.user;updateTeacherUI();}
+        }
+        async function teacherLogout(){await supabaseClient.auth.signOut();teacherUser=null;updateTeacherUI();}
+        function setAuthMessage(msg,err=false){const el=document.getElementById('authMessage');if(el){el.innerText=msg;el.className='text-xs mt-3 '+(err?'text-red-300':'text-emerald-300');}}
+        function updateTeacherUI(){
+            const logged=!!teacherUser;
+            document.getElementById('teacherLoginPanel').classList.toggle('hidden',logged);
+            document.getElementById('teacherDashboard').classList.toggle('hidden',!logged);
+            if(logged){document.getElementById('teacherIdentity').innerText=teacherUser.email||'Guru';loadResourcesFromSupabase();renderTeacherTable();}
+        }
+
+        async function saveResource(event){
+            event.preventDefault(); if(!teacherUser) return setAuthMessage('Sila log masuk dahulu.',true);
+            const title=document.getElementById('resourceTitle').value.trim();
+            const category=document.getElementById('resourceCategory').value;
+            const year=document.getElementById('resourceYear').value;
+            const subject=document.getElementById('resourceSubject').value.trim();
+            const description=document.getElementById('resourceDescription').value.trim();
+            let external=document.getElementById('resourceExternalUrl').value.trim();
+            const file=document.getElementById('resourceFile').files[0];
+            let fileUrl=null;
+            try{
+                if(file){
+                    const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+                    const path=`${teacherUser.id}/${Date.now()}_${safe}`;
+                    const up=await supabaseClient.storage.from('smart-hub-files').upload(path,file,{upsert:false});
+                    if(up.error) throw up.error;
+                    const pub=supabaseClient.storage.from('smart-hub-files').getPublicUrl(path); fileUrl=pub.data.publicUrl;
+                }
+                if(!fileUrl && !external) throw new Error('Sila upload fail atau masukkan pautan luar.');
+                const {data,error}=await supabaseClient.from('resources').insert({title,category,year:year?Number(year):null,subject:subject||null,description:description||null,file_url:fileUrl,external_url:external||null}).select().single();
+                if(error) throw error;
+                resourcesList.unshift(data);renderResources();renderTeacherResources();document.getElementById('resourceForm').reset();showToast('Bahan berjaya ditambah ke SMART HUB.');
+            }catch(e){console.error(e);showToast('Gagal simpan bahan: '+(e.message||e));}
+        }
+
+        function renderTeacherResources(){
+            const box=document.getElementById('teacherResourcesList'); if(!box) return;
+            box.innerHTML=resourcesList.length?resourcesList.map(r=>`<div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200"><div><b class="text-sm text-slate-800">${escapeHtml(r.title)}</b><div class="text-[11px] text-slate-500">${r.category} ${r.year?'• Tahun '+r.year:''} ${r.subject?'• '+escapeHtml(r.subject):''}</div></div><button onclick="deleteResource('${r.id}')" class="text-xs font-black text-red-600">Padam</button></div>`).join(''):'<p class="text-sm text-slate-400">Tiada bahan.</p>';
+        }
+        async function deleteResource(id){
+            if(!confirm('Padam bahan ini?')) return;
+            const {error}=await supabaseClient.from('resources').delete().eq('id',id);
+            if(error) return showToast('Gagal padam bahan.');
+            resourcesList=resourcesList.filter(r=>r.id!==id);renderResources();renderTeacherResources();showToast('Bahan dipadam.');
         }
 
         /* Custom Toast Notification */
