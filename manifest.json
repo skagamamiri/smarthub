@@ -1,0 +1,10 @@
+{
+  "name":"SMART HUB — Pusat Pembelajaran Digital SK Agama (MIS) Miri",
+  "short_name":"SMART HUB",
+  "start_url":"./index.html",
+  "display":"standalone",
+  "background_color":"#f0fdf4",
+  "theme_color":"#059669",
+  "orientation":"landscape",
+  "icons":[{"src":"smart-hub-logo.png","sizes":"1024x1024","type":"image/png"}]
+}
