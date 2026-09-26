@@ -52,7 +52,7 @@
   </div>
 </div></div></section>
 </main>
-<div id="viewer" class="fixed inset-0 z-50 hidden modal p-2 sm:p-4"><div class="bg-white w-full h-full max-w-6xl mx-auto rounded-3xl overflow-hidden flex flex-col"><div class="bg-slate-900 text-white p-3 flex justify-between items-center"><b id="viewerTitle">Bahan</b><button id="closeViewer" class="w-10 h-10 rounded-xl bg-slate-700">✕</button></div><iframe id="viewerFrame" class="w-full flex-1 border-0" allow="fullscreen; autoplay" referrerpolicy="no-referrer"></iframe></div></div>
+<div id="viewer" class="fixed inset-0 z-50 hidden modal p-2 sm:p-4"><div class="bg-white w-full h-full max-w-6xl mx-auto rounded-3xl overflow-hidden flex flex-col"><div class="bg-slate-900 text-white p-3 flex justify-between items-center"><b id="viewerTitle">Bahan</b><button id="closeViewer" class="w-10 h-10 rounded-xl bg-slate-700">✕</button></div><iframe id="viewerFrame" class="w-full flex-1 border-0" allow="fullscreen; autoplay"></iframe></div></div>
 <div id="toast" class="fixed bottom-5 right-5 z-[60] hidden bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl"></div>
 <script>
 const CONFIG={SUPABASE_URL:'https://vjbegygjpdiujzaabwmw.supabase.co',SUPABASE_ANON_KEY:'sb_publishable_8qZ46Vz-4OKX2OK0VptZjQ_f0iAWjS8',STORAGE_BUCKET:'smart-hub-files'};let sb=null,user=null,isAdmin=false;
@@ -99,29 +99,21 @@ function getDriveFileId_(resource){
 function getResourceViewerUrl_(resource){
   if(!resource)return '';
 
-  // 1. Gunakan previewUrl/file_url yang disimpan oleh Apps Script dahulu.
-  const storedUrl=String(
-    resource.file_url ||
-    resource.preview_url ||
-    resource.previewUrl ||
-    resource.url ||
-    ''
-  ).trim();
-
-  if(storedUrl){
-    return storedUrl;
-  }
-
-  // 2. Jika hanya drive_file_id yang ada, bina URL preview.
   const driveId=getDriveFileId_(resource);
-
   if(driveId){
-    return 'https://drive.google.com/file/d/'+
-      encodeURIComponent(driveId)+
-      '/preview';
+    const directUrl='https://drive.google.com/uc?export=download&id='+encodeURIComponent(driveId);
+    return 'https://docs.google.com/gview?embedded=true&url='+encodeURIComponent(directUrl);
   }
 
-  return '';
+  return String(
+    resource.file_url || resource.preview_url || resource.previewUrl || resource.url || ''
+  ).trim();
+}
+
+function getResourceDirectUrl_(resource){
+  const driveId=getDriveFileId_(resource);
+  if(driveId)return 'https://drive.google.com/file/d/'+encodeURIComponent(driveId)+'/preview';
+  return String(resource?.file_url || resource?.preview_url || resource?.previewUrl || resource?.url || '').trim();
 }
 
 function openResource(id){
@@ -129,21 +121,24 @@ function openResource(id){
   if(!r)return;
 
   $('viewerTitle').textContent=r.title || 'Bahan';
-
+  const frame=$('viewerFrame');
   const url=getResourceViewerUrl_(r);
+  const directUrl=getResourceDirectUrl_(r);
 
   console.log('SMART HUB opening resource:',r);
-  console.log('SMART HUB viewer URL:',url);
+  console.log('SMART HUB Google Viewer URL:',url);
+  console.log('SMART HUB direct Drive URL:',directUrl);
 
-  // Reset viewer supaya fail sebelumnya tidak mengganggu.
-  $('viewerFrame').srcdoc='';
-  $('viewerFrame').removeAttribute('src');
+  frame.srcdoc='';
+  frame.removeAttribute('src');
+  frame.setAttribute('allowfullscreen','');
 
   if(url){
-    $('viewerFrame').src=url;
+    frame.src=url;
+  }else if(directUrl){
+    frame.src=directUrl;
   }else{
-    $('viewerFrame').srcdoc=
-      '<html><body style="font-family:Arial;padding:40px;text-align:center">'+
+    frame.srcdoc='<html><body style="font-family:Arial;padding:40px;text-align:center">'+
       '<h1>'+(r.icon||'📚')+' '+(r.title||'Bahan')+'</h1>'+
       '<p>Bahan belum mempunyai fail atau URL.</p>'+
       '</body></html>';
