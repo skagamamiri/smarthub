@@ -24,3 +24,7 @@ NOTA KESELAMATAN
 - Jangan masukkan service_role key ke dalam index.html.
 - Hanya anon/public key digunakan pada frontend.
 - Polisi V1.1 membenarkan pengguna authenticated mengurus kandungan. Untuk sekolah dengan ramai guru, peranan admin/teacher boleh diperketatkan pada fasa seterusnya.
+
+
+Google Drive root folder configured: 174lCIFRIMH_tThruGFr9hKrtOF-6N2jl
+Google Apps Script Web App configured in supabase-config.js.
