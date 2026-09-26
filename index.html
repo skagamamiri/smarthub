@@ -163,7 +163,8 @@ $('resourceForm').onsubmit=async e=>{
       const drive=await uploadFileToGoogleDrive(file,{title,type,year,subject});
       fileUrl=drive.previewUrl||drive.fileUrl; driveFileId=drive.fileId||null;
     }
-    const payload={title,category:type,type,year,subject,icon:'📚',file_url:fileUrl,drive_file_id:driveFileId};
+    const categoryMap={textbook:'Buku Teks',activity:'Buku Aktiviti',video:'Video',worksheet:'Latihan',reference:'Rujukan'};
+    const payload={title,category:categoryMap[type]||'Rujukan',type,year,subject,icon:'📚',file_url:fileUrl,drive_file_id:driveFileId};
     const {error}=await sb.from('resources').insert(payload);
     if(error)throw error;
     $('resourceForm').reset();$('resourceMsg').textContent='Bahan berjaya disimpan ke Google Drive.';await loadFromSupabase();await loadManageList();
