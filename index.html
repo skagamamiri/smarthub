@@ -63,10 +63,39 @@ function openGame(id){const g=games.find(x=>String(x.id)===String(id));if(!g)ret
 $('closeViewer').onclick=()=>{$('viewer').classList.add('hidden');$('viewerFrame').src='';$('viewerFrame').srcdoc=''};
 $('resourceSearch').oninput=renderResources;$('gameSearch').oninput=renderGames;yearButtons('yearFilters',y=>{activeResourceYear=y;renderResources()});yearButtons('gameYears',y=>{activeGameYear=y;renderGames()});document.querySelectorAll('.rtype').forEach(b=>b.onclick=()=>{document.querySelectorAll('.rtype').forEach(x=>x.className='rtype px-3 py-2 rounded-xl bg-slate-100 font-bold');b.className='rtype active px-3 py-2 rounded-xl bg-emerald-600 text-white font-bold';activeType=b.dataset.type;renderResources()});
 async function loadFromSupabase(){if(!sb)return;try{const [rr,gg]=await Promise.all([sb.from('resources').select('*').order('created_at',{ascending:false}),sb.from('games').select('*').order('created_at',{ascending:false})]);if(!rr.error&&rr.data?.length){resources=rr.data;renderResources()}if(!gg.error&&gg.data?.length){games=gg.data;renderGames()}}catch(e){console.warn(e)}}
-function renderTeacherState(){if(user){$('teacherLogin').classList.add('hidden');$('teacherPanel').classList.remove('hidden');$('teacherEmail').textContent=user.email||'';loadManageList()}else{$('teacherLogin').classList.remove('hidden');$('teacherPanel').classList.add('hidden')}}
-async function login(e){e.preventDefault();if(!sb){$('authMsg').textContent='Supabase belum dikonfigurasi. Masukkan URL dan anon key dalam CONFIG.';return}const {data,error}=await sb.auth.signInWithPassword({email:$('email').value,password:$('password').value});if(error){$('authMsg').textContent=error.message;return}user=data.user;$('authMsg').textContent='';renderTeacherState();toast('Log masuk berjaya.')}
+let teacherCheckBusy=false;
+let authNotice='';
+function renderTeacherState(){if(user){$('teacherLogin').classList.add('hidden');$('teacherPanel').classList.remove('hidden');$('teacherEmail').textContent=user.email||'';loadManageList()}else{$('teacherLogin').classList.remove('hidden');$('teacherPanel').classList.add('hidden');if(authNotice){$('authMsg').textContent=authNotice;$('authMsg').className='text-sm mt-3 text-red-600 font-bold';authNotice=''}}}
+async function verifyTeacherAccess(candidate){
+  if(!sb||!candidate?.email)return false;
+  const {data,error}=await sb.rpc('is_teacher_allowed',{check_email:candidate.email});
+  if(error){console.error('Whitelist check failed:',error);authNotice='Tidak dapat mengesahkan akaun guru. Sila cuba lagi.';return false}
+  if(data!==true){authNotice='Akses ditolak. Akaun Google ini tidak berdaftar sebagai guru SK Agama (MIS) Miri.';return false}
+  return true;
+}
+async function acceptAuthenticatedUser(candidate){
+  if(!candidate)return;
+  if(teacherCheckBusy)return;
+  teacherCheckBusy=true;
+  $('authMsg').textContent='Mengesahkan akaun guru...';
+  $('authMsg').className='text-sm mt-3 text-slate-600 font-bold';
+  const allowed=await verifyTeacherAccess(candidate);
+  teacherCheckBusy=false;
+  if(!allowed){
+    user=null;
+    if(sb)await sb.auth.signOut();
+    renderTeacherState();
+    return;
+  }
+  user=candidate;
+  $('authMsg').textContent='';
+  $('authMsg').className='text-sm mt-3';
+  renderTeacherState();
+}
+async function login(e){e.preventDefault();if(!sb){$('authMsg').textContent='Supabase belum dikonfigurasi.';return}authNotice='';$('authMsg').textContent='Mengesahkan...';const {data,error}=await sb.auth.signInWithPassword({email:$('email').value,password:$('password').value});if(error){$('authMsg').textContent=error.message;return}await acceptAuthenticatedUser(data.user);if(user)toast('Log masuk berjaya.')}
 $('loginForm').onsubmit=login;
-$('googleLoginBtn').onclick=async()=>{if(!sb){$('authMsg').textContent='Supabase belum dikonfigurasi.';return}$('authMsg').textContent='Membuka Google...';const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+window.location.pathname}});if(error)$('authMsg').textContent=error.message};$('logoutBtn').onclick=async()=>{if(sb)await sb.auth.signOut();user=null;renderTeacherState();toast('Log keluar.')};
+$('googleLoginBtn').onclick=async()=>{if(!sb){$('authMsg').textContent='Supabase belum dikonfigurasi.';return}authNotice='';$('authMsg').textContent='Membuka Google...';$('authMsg').className='text-sm mt-3 text-slate-600 font-bold';const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+window.location.pathname}});if(error)$('authMsg').textContent=error.message};
+$('logoutBtn').onclick=async()=>{if(sb)await sb.auth.signOut();user=null;authNotice='';renderTeacherState();toast('Log keluar.')};
 async function uploadFile(file){if(!sb||!file)return null;const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');const path=`${Date.now()}_${safe}`;const {error}=await sb.storage.from(CONFIG.STORAGE_BUCKET).upload(path,file,{upsert:false,contentType:file.type||undefined});if(error)throw error;const {data}=sb.storage.from(CONFIG.STORAGE_BUCKET).getPublicUrl(path);return data.publicUrl}
 $('resourceForm').onsubmit=async e=>{e.preventDefault();if(!sb||!user){$('resourceMsg').textContent='Log masuk dan konfigurasi Supabase dahulu.';return}try{$('resourceMsg').textContent='Menyimpan...';const file=$('resFile').files[0];const fileUrl=file?await uploadFile(file):$('resUrl').value.trim();const payload={title:$('resTitle').value.trim(),type:$('resType').value,year:$('resYear').value,subject:$('resSubject').value.trim(),file_url:fileUrl,icon:({textbook:'📚',activity:'📖',video:'🎥',worksheet:'📝',reference:'📂'})[$('resType').value]||'📚'};const {error}=await sb.from('resources').insert(payload);if(error)throw error;$('resourceForm').reset();$('resourceMsg').textContent='Bahan berjaya disimpan.';await loadFromSupabase();await loadManageList()}catch(err){$('resourceMsg').textContent=err.message}}
 $('gameForm').onsubmit=async e=>{e.preventDefault();if(!sb||!user){$('gameMsg').textContent='Log masuk dan konfigurasi Supabase dahulu.';return}try{$('gameMsg').textContent='Menyimpan...';const payload={title:$('gameTitle').value.trim(),subject:$('gameSubject').value.trim(),year:$('gameYear').value,emoji:$('gameEmoji').value||'🎮',description:$('gameDesc').value.trim(),html_code:$('gameHtml').value};const {error}=await sb.from('games').insert(payload);if(error)throw error;$('gameForm').reset();$('gameEmoji').value='🎮';$('gameMsg').textContent='Permainan berjaya disimpan.';await loadFromSupabase();await loadManageList()}catch(err){$('gameMsg').textContent=err.message}}
@@ -74,6 +103,6 @@ async function loadManageList(){if(!sb||!user)return;const [r,g]=await Promise.a
 async function deleteResource(id){if(!confirm('Hapus bahan ini?'))return;const {error}=await sb.from('resources').delete().eq('id',id);if(error)return toast(error.message);await loadFromSupabase();await loadManageList();toast('Bahan dihapus.')}
 async function deleteGame(id){if(!confirm('Hapus permainan ini?'))return;const {error}=await sb.from('games').delete().eq('id',id);if(error)return toast(error.message);await loadFromSupabase();await loadManageList();toast('Permainan dihapus.')}
 $('refreshBtn').onclick=()=>{loadFromSupabase();loadManageList()};
-if(sb){const statusEl=$('supabaseStatus');if(statusEl){statusEl.textContent=' • Supabase disambungkan';statusEl.className='text-[10px] font-bold text-emerald-600'}sb.auth.getSession().then(({data})=>{user=data.session?.user||null;renderTeacherState()});sb.auth.onAuthStateChange((_e,s)=>{user=s?.user||null;renderTeacherState()})}else renderTeacherState();
+if(sb){const statusEl=$('supabaseStatus');if(statusEl){statusEl.textContent=' • Supabase disambungkan';statusEl.className='text-[10px] font-bold text-emerald-600'}sb.auth.getSession().then(async({data})=>{if(data.session?.user)await acceptAuthenticatedUser(data.session.user);else{user=null;renderTeacherState()}});sb.auth.onAuthStateChange(async(_e,s)=>{if(_e==='SIGNED_OUT'){user=null;renderTeacherState();return}if(s?.user)await acceptAuthenticatedUser(s.user)})}else renderTeacherState();
 renderResources();renderGames();loadFromSupabase();if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));
 </script></body></html>
