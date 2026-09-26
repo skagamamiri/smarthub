@@ -134,7 +134,7 @@ $('resourceForm').onsubmit=async e=>{
       const drive=await uploadFileToGoogleDrive(file,{title,type,year,subject});
       fileUrl=drive.previewUrl||drive.fileUrl; driveFileId=drive.fileId||null;
     }
-    const payload={title,type,year,subject,file_url:fileUrl};
+    const payload={title,category:type,type,year,subject,icon:'📚',file_url:fileUrl,drive_file_id:driveFileId};
     const {error}=await sb.from('resources').insert(payload);
     if(error)throw error;
     $('resourceForm').reset();$('resourceMsg').textContent='Bahan berjaya disimpan ke Google Drive.';await loadFromSupabase();await loadManageList();
