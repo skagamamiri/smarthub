@@ -1,4 +1,4 @@
-const CACHE = 'smart-hub-v2';
+const CACHE = 'smart-hub-v3';
 const PRECACHE = ['./', './index.html', './manifest.json', './smart-hub-logo.png'];
 
 self.addEventListener('install', event => {
