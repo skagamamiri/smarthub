@@ -34,8 +34,27 @@ const demoResources=[{id:'r1',title:'Buku Teks Pendidikan Islam Tahun 1',type:'t
 const demoGames=[{id:'g1',title:'Kuiz Rukun Islam Cilik',year:'1',subject:'Pendidikan Islam',emoji:'🕌',description:'Kuiz asas Rukun Islam.',html_code:`<!doctype html><html><body style="font-family:Arial;text-align:center;padding:40px"><h1>🕌 Kuiz Rukun Islam Cilik</h1><p>Versi demo SMART HUB.</p></body></html>`},{id:'g2',title:'Cabaran Sifir Pantas',year:'2',subject:'Matematik',emoji:'🔢',description:'Cabaran sifir.',html_code:`<!doctype html><html><body style="font-family:Arial;text-align:center;padding:40px"><h1>🔢 Cabaran Sifir Pantas</h1><p>Versi demo SMART HUB.</p></body></html>`},{id:'g3',title:'Padan Huruf Jawi',year:'1',subject:'Jawi',emoji:'📖',description:'Padankan huruf Jawi.',html_code:`<!doctype html><html><body style="font-family:Arial;text-align:center;padding:40px"><h1>📖 Padan Huruf Jawi</h1><p>Versi demo SMART HUB.</p></body></html>`}];
 let resources=[...demoResources],games=[...demoGames],activeResourceYear='all',activeGameYear='all',activeType='all';
 const $=id=>document.getElementById(id);function toast(msg){$('toast').textContent=msg;$('toast').classList.remove('hidden');setTimeout(()=>$('toast').classList.add('hidden'),2500)}
-function show(id){document.querySelectorAll('.section').forEach(x=>x.classList.add('hidden'));$(id).classList.remove('hidden');document.querySelectorAll('.nav').forEach(x=>{x.classList.toggle('bg-emerald-600',x.dataset.section===id);x.classList.toggle('text-white',x.dataset.section===id)});if(id==='teacher')renderTeacherState()}
+function show(id){
+  document.querySelectorAll('.section').forEach(x=>x.classList.add('hidden'));
+  $(id).classList.remove('hidden');
+
+  // Active navigation: remove the inactive background first, then apply the green active state.
+  // This avoids Tailwind utility-order conflicts when switching between pages.
+  document.querySelectorAll('.nav').forEach(x=>{
+    const active=x.dataset.section===id;
+    x.className='nav touch-btn px-4 py-2 rounded-xl font-bold '+(active?'bg-emerald-600 text-white':'bg-slate-100 text-slate-800');
+  });
+
+  const teacherBtn=$('teacherBtn');
+  if(teacherBtn){
+    const active=id==='teacher';
+    teacherBtn.className='touch-btn px-4 py-2 rounded-xl font-bold '+(active?'bg-emerald-600 text-white':'bg-slate-100 text-slate-800');
+  }
+
+  if(id==='teacher')renderTeacherState();
+}
 document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>show(b.dataset.section));document.querySelectorAll('.quick').forEach(b=>b.onclick=()=>show(b.dataset.go));$('teacherBtn').onclick=()=>show('teacher');
+show('home');
 function yearButtons(id,cb){const e=$(id);e.innerHTML='<button class="yb px-3 py-2 rounded-xl bg-emerald-600 text-white font-bold" data-y="all">Semua</button>'+[1,2,3,4,5,6].map(y=>`<button class="yb px-3 py-2 rounded-xl bg-slate-100 font-bold" data-y="${y}">Tahun ${y}</button>`).join('');e.querySelectorAll('.yb').forEach(b=>b.onclick=()=>{e.querySelectorAll('.yb').forEach(x=>x.className='yb px-3 py-2 rounded-xl bg-slate-100 font-bold');b.className='yb px-3 py-2 rounded-xl bg-emerald-600 text-white font-bold';cb(b.dataset.y)})}
 function renderResources(){const q=$('resourceSearch').value.toLowerCase();$('resourceGrid').innerHTML=resources.filter(r=>(activeResourceYear==='all'||String(r.year)===activeResourceYear)&&(activeType==='all'||r.type===activeType)&&(`${r.title} ${r.subject}`).toLowerCase().includes(q)).map(r=>`<button class="app-card text-left bg-white p-5 rounded-3xl border-2 border-emerald-100 shadow" onclick="openResource('${r.id}')"><div class="flex justify-between"><span class="text-4xl">${r.icon||'📚'}</span><span class="bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-xs font-black">Tahun ${r.year}</span></div><span class="text-[11px] font-black uppercase text-emerald-600">${r.subject}</span><h3 class="font-black font-display text-lg mt-1">${r.title}</h3><p class="text-xs text-slate-500 mt-2">Tekan untuk buka bahan.</p></button>`).join('')||'<div class="col-span-full p-10 text-center bg-white rounded-3xl">Tiada bahan dijumpai.</div>'}
 function renderGames(){const q=$('gameSearch').value.toLowerCase();$('gameGrid').innerHTML=games.filter(g=>(activeGameYear==='all'||String(g.year)===activeGameYear)&&(`${g.title} ${g.subject}`).toLowerCase().includes(q)).map(g=>`<button class="app-card text-left bg-white p-5 rounded-3xl border-2 border-emerald-100 shadow" onclick="openGame('${g.id}')"><div class="flex justify-between"><span class="text-4xl">${g.emoji||'🎮'}</span><span class="bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-xs font-black">Tahun ${g.year}</span></div><span class="text-[11px] font-black uppercase text-emerald-600">${g.subject}</span><h3 class="font-black font-display text-lg mt-1">${g.title}</h3><div class="mt-4 inline-block bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-black">▶ Main Sekarang</div></button>`).join('')||'<div class="col-span-full p-10 text-center bg-white rounded-3xl">Tiada permainan dijumpai.</div>'}
