@@ -97,9 +97,14 @@ function getDriveFileId_(resource){
   return '';
 }
 function getResourceViewerUrl_(resource){
+  if(!resource)return '';
+  // Utamakan previewUrl yang disimpan semasa upload kerana ia mungkin
+  // mengandungi resource key Google Drive.
+  const storedUrl=String(resource.file_url||resource.url||'').trim();
+  if(/drive\.google\.com\/file\/d\//i.test(storedUrl)) return storedUrl;
   const driveId=getDriveFileId_(resource);
   if(driveId)return 'https://drive.google.com/file/d/'+encodeURIComponent(driveId)+'/preview';
-  return String(resource?.file_url||resource?.url||'').trim();
+  return storedUrl;
 }
 function openResource(id){
   const r=resources.find(x=>String(x.id)===String(id));
