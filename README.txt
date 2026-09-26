@@ -28,3 +28,6 @@ NOTA KESELAMATAN
 
 Google Drive root folder configured: 174lCIFRIMH_tThruGFr9hKrtOF-6N2jl
 Google Apps Script Web App configured in supabase-config.js.
+
+
+V6 upload fix: resources insert now supplies both category and type, plus drive_file_id, matching the current Supabase schema.
