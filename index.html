@@ -12,7 +12,110 @@
 <script src="supabase-config.js"></script>
 <style>
 :root{--green:#059669;--dark:#047857;--gold:#f59e0b}*{box-sizing:border-box}body{font-family:'Plus Jakarta Sans',sans-serif;background:#f0fdf4;background-image:radial-gradient(#10b981 .75px,transparent .75px),radial-gradient(#10b981 .75px,#f0fdf4 .75px);background-size:30px 30px;background-position:0 0,15px 15px}.font-display{font-family:'Fredoka',sans-serif}.app-card{transition:.2s}.app-card:hover{transform:translateY(-4px);box-shadow:0 18px 35px rgba(15,23,42,.12)}.touch-btn{min-height:52px}.modal{background:rgba(2,6,23,.78);backdrop-filter:blur(6px)}.safe-bottom{padding-bottom:max(1rem,env(safe-area-inset-bottom))}.hide-scroll::-webkit-scrollbar{display:none}.hide-scroll{scrollbar-width:none}
-</style></head>
+/* =========================================================
+   SMART HUB - FULLSCREEN PDF VIEWER
+   ========================================================= */
+
+body.viewer-open {
+    overflow: hidden !important;
+}
+
+#viewer {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: 99999 !important;
+    background: #111827 !important;
+}
+
+#viewer > div {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+}
+
+#pdfStage {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #1f2937 !important;
+    display: block !important;
+}
+
+#pdfObject {
+    display: block !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    min-width: 100% !important;
+    min-height: 100% !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: white !important;
+}
+
+/* Butang tutup sahaja */
+#closeViewer {
+    position: fixed !important;
+    top: 14px !important;
+    right: 14px !important;
+    z-index: 100001 !important;
+
+    width: 48px !important;
+    height: 48px !important;
+
+    padding: 0 !important;
+    margin: 0 !important;
+
+    border: 0 !important;
+    border-radius: 50% !important;
+
+    background: rgba(15,23,42,.88) !important;
+    color: white !important;
+
+    font-size: 26px !important;
+    line-height: 48px !important;
+    text-align: center !important;
+
+    cursor: pointer !important;
+    box-shadow: 0 4px 18px rgba(0,0,0,.35) !important;
+}
+
+#closeViewer:hover {
+    background: rgba(5,150,105,.95) !important;
+}
+
+/* Sembunyikan header/title viewer lama */
+#viewer > div > div:first-child {
+    display: none !important;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+    #closeViewer {
+        top: 10px !important;
+        right: 10px !important;
+        width: 44px !important;
+        height: 44px !important;
+        line-height: 44px !important;
+        font-size: 24px !important;
+    }
+}
+</style>
+</head>
 <body class="min-h-screen text-slate-800">
 <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b-4 border-emerald-600 shadow-md"><div class="max-w-7xl mx-auto px-4 py-3"><div class="flex flex-col lg:flex-row items-center justify-between gap-3">
 <div class="flex items-center gap-3"><img src="smart-hub-logo.png" class="w-14 h-14 rounded-2xl shadow" alt="SMART HUB logo"><div><span class="bg-yellow-400 text-emerald-950 font-black text-[10px] uppercase px-2 py-1 rounded-full">SK Agama (MIS) Miri</span><h1 class="text-2xl sm:text-3xl font-black font-display text-emerald-900 leading-tight">SMART <span class="text-amber-500">HUB</span></h1><p class="text-xs font-semibold text-emerald-700">Pusat Pembelajaran Digital</p><span id="supabaseStatus" class="text-[10px] font-bold text-slate-400"></span></div></div>
@@ -51,10 +154,44 @@
     </div>
   </div>
 </div></div></section>
-</main>
-<section id="viewer" class="hidden w-full max-w-none px-0 pb-6"><div class="w-full bg-white shadow-xl border-2 border-emerald-100 overflow-hidden"><div class="bg-slate-900 text-white p-3 sm:p-4 flex justify-between items-center gap-3"><div class="min-w-0"><div class="text-emerald-300 text-xs font-black uppercase">Paparan Bahan</div><b id="viewerTitle" class="block truncate">Bahan</b></div><button id="closeViewer" class="shrink-0 w-10 h-10 rounded-xl bg-slate-700 hover:bg-slate-600 font-black">✕ Kembali</button></div><div id="pdfStage" class="bg-slate-100 min-h-[70vh] w-full flex items-center justify-center p-0"><object id="pdfObject"
-  class="w-full h-[calc(100vh-150px)] bg-white"
-  type="application/pdf"><div class="p-8 text-center"><div class="text-5xl">📄</div><h3 class="font-black font-display text-xl mt-3">PDF tidak dapat dipaparkan terus</h3><p class="text-sm text-slate-500 mt-2">Gunakan butang di bawah untuk membuka fail.</p><a id="pdfFallback" href="#" target="_blank" rel="noopener noreferrer" class="inline-block mt-4 bg-emerald-600 text-white px-5 py-3 rounded-xl font-black">Buka PDF</a></div></object></div></div></section>
+</main><section id="viewer" class="hidden">
+
+    <button id="closeViewer" type="button" aria-label="Tutup">
+        ✕
+    </button>
+
+    <div id="pdfStage">
+
+        <object
+            id="pdfObject"
+            type="application/pdf">
+
+            <div class="p-8 text-center text-white">
+                <div class="text-5xl">📄</div>
+
+                <h3 class="font-black text-xl mt-3">
+                    PDF tidak dapat dipaparkan terus
+                </h3>
+
+                <p class="text-sm mt-2 opacity-80">
+                    Gunakan pautan di bawah untuk membuka fail.
+                </p>
+
+                <a
+                    id="pdfFallback"
+                    href="#"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-block mt-4 bg-emerald-600 text-white px-5 py-3 rounded-xl font-black">
+                    Buka PDF
+                </a>
+            </div>
+
+        </object>
+
+    </div>
+
+</section>
 <div id="toast" class="fixed bottom-5 right-5 z-[60] hidden bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl"></div>
 <script>
 const CONFIG={SUPABASE_URL:'https://vjbegygjpdiujzaabwmw.supabase.co',SUPABASE_ANON_KEY:'sb_publishable_8qZ46Vz-4OKX2OK0VptZjQ_f0iAWjS8',STORAGE_BUCKET:'smart-hub-files'};let sb=null,user=null,isAdmin=false;
