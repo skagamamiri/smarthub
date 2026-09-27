@@ -137,9 +137,44 @@ function getResourceViewerUrl_(resource){
   return String(resource?.file_url||resource?.url||'').trim();
 }
 let pdfDoc=null,pdfPage=1,pdfScale=1,pdfFitScale=1,pdfZoomFactor=1,pdfRendering=false,pdfPendingPage=null;
-async function loadPdfFromDrive_(driveId){
+const PDF_CACHE_DB='smart_hub_pdf_cache_v1',PDF_CACHE_STORE='pdfs';
+function openPdfCacheDb_(){
+  return new Promise(resolve=>{
+    if(!('indexedDB' in window)){resolve(null);return}
+    const req=indexedDB.open(PDF_CACHE_DB,1);
+    req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(PDF_CACHE_STORE))req.result.createObjectStore(PDF_CACHE_STORE,{keyPath:'key'})};
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>resolve(null);
+  });
+}
+async function getCachedPdf_(key){
+  const db=await openPdfCacheDb_();if(!db)return null;
+  return new Promise(resolve=>{
+    const tx=db.transaction(PDF_CACHE_STORE,'readonly'),req=tx.objectStore(PDF_CACHE_STORE).get(key);
+    req.onsuccess=()=>resolve(req.result?.data?new Uint8Array(req.result.data):null);
+    req.onerror=()=>resolve(null);
+  });
+}
+async function saveCachedPdf_(key,bytes,meta){
+  const db=await openPdfCacheDb_();if(!db)return false;
+  return new Promise(resolve=>{
+    const tx=db.transaction(PDF_CACHE_STORE,'readwrite');
+    tx.objectStore(PDF_CACHE_STORE).put({key,data:bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),cachedAt:Date.now(),meta:meta||{}});
+    tx.oncomplete=()=>resolve(true);tx.onerror=()=>resolve(false);
+  });
+}
+async function loadPdfFromDrive_(driveId,cacheKey){
+  const key=String(cacheKey||driveId);
+  try{
+    const cached=await getCachedPdf_(key);
+    if(cached&&cached.byteLength){
+      $('pdfStatus').textContent='Membuka PDF dari simpanan...';
+      return cached;
+    }
+  }catch(e){console.warn('PDF cache read:',e)}
   const endpoint=(window.SMART_HUB_GOOGLE_DRIVE_UPLOAD_URL||'').trim();
   if(!endpoint)throw new Error('Endpoint Google Drive belum dikonfigurasi.');
+  $('pdfStatus').textContent='Memuat turun PDF kali pertama...';
   const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'read',fileId:String(driveId)})});
   const text=await res.text();
   let json;try{json=JSON.parse(text)}catch(e){throw new Error('Respons Google Drive tidak sah.');}
@@ -147,6 +182,7 @@ async function loadPdfFromDrive_(driveId){
   const raw=atob(json.data);
   const bytes=new Uint8Array(raw.length);
   for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
+  try{await saveCachedPdf_(key,bytes,{driveId:String(driveId)});$('pdfStatus').textContent='PDF disimpan. Membuka...'}catch(e){console.warn('PDF cache write:',e)}
   return bytes;
 }
 function updatePdfScaleFromZoom_(){
@@ -196,7 +232,8 @@ async function openPdfResource_(r){
   $('pdfTitle').textContent=r.title||'PDF';
   pdfDoc=null;pdfPage=1;pdfScale=1;pdfFitScale=1;pdfZoomFactor=1;$('pdfPageInfo').textContent='1 / 1';$('pdfPageInput').value=1;$('pdfPageInput').max=1;$('pdfPageTotal').textContent='1';
   $('pdfCanvas').style.width='1px';$('pdfCanvas').style.height='1px';
-  const bytes=await loadPdfFromDrive_(driveId);
+  const cacheKey=String(driveId)+'::'+String(r.updated_at||r.modified_at||r.created_at||'v1');
+  const bytes=await loadPdfFromDrive_(driveId,cacheKey);
   pdfDoc=await pdfjsLib.getDocument({data:bytes}).promise;
   $('pdfStatus').classList.add('hidden');
   const firstPage=await pdfDoc.getPage(1);
