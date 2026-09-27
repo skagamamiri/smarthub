@@ -65,9 +65,15 @@
   <div id="pdfViewer" class="absolute inset-0 hidden flex flex-col bg-slate-950">
     <div id="pdfToolbar" class="h-14 shrink-0 bg-slate-900 text-white flex items-center gap-2 px-3 shadow-lg">
       <div id="pdfTitle" class="font-bold truncate flex-1 text-sm sm:text-base">PDF</div>
-      <button id="pdfPrev" type="button" class="pdf-tool-btn px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 active:scale-95 font-bold cursor-pointer select-none">‹</button>
-      <span id="pdfPageInfo" class="text-xs sm:text-sm font-bold min-w-[70px] text-center">1 / 1</span>
-      <button id="pdfNext" type="button" class="pdf-tool-btn px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 active:scale-95 font-bold cursor-pointer select-none">›</button>
+      <button id="pdfPrev" type="button" aria-label="Halaman sebelumnya" class="pdf-tool-btn px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 active:scale-95 font-bold cursor-pointer select-none">‹</button>
+      <span id="pdfPageInfo" class="hidden sm:inline text-xs sm:text-sm font-bold min-w-[58px] text-center">1 / 1</span>
+      <div class="flex items-center gap-1 bg-slate-700 rounded-lg px-2 py-1" title="Pergi ke halaman">
+        <input id="pdfPageInput" type="number" min="1" value="1" inputmode="numeric" aria-label="Nombor halaman" class="w-14 sm:w-16 bg-white text-slate-900 rounded-md px-2 py-1 text-center text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-400" />
+        <span class="text-xs font-bold text-white">/</span>
+        <span id="pdfPageTotal" class="text-xs font-bold text-white min-w-[18px] text-center">1</span>
+      </div>
+      <button id="pdfGoPage" type="button" aria-label="Pergi ke halaman" class="pdf-tool-btn px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:scale-95 font-bold cursor-pointer select-none">GO</button>
+      <button id="pdfNext" type="button" aria-label="Halaman seterusnya" class="pdf-tool-btn px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 active:scale-95 font-bold cursor-pointer select-none">›</button>
       <button id="pdfZoomOut" type="button" class="pdf-tool-btn px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 active:scale-95 font-bold cursor-pointer select-none">−</button>
       <button id="pdfZoomIn" type="button" class="pdf-tool-btn px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 active:scale-95 font-bold cursor-pointer select-none">+</button>
       <button id="pdfClose" type="button" aria-label="Tutup PDF" class="pdf-tool-btn w-11 h-11 rounded-full bg-slate-700 hover:bg-slate-600 active:scale-95 text-white text-xl font-black cursor-pointer select-none">✕</button>
@@ -168,6 +174,9 @@ async function renderPdfPage_(num){
     canvas.style.height=Math.ceil(viewport.height)+'px';
     await page.render({canvasContext:ctx,viewport}).promise;
     $('pdfPageInfo').textContent=`${num} / ${pdfDoc.numPages}`;
+    $('pdfPageInput').value=num;
+    $('pdfPageInput').max=pdfDoc.numPages;
+    $('pdfPageTotal').textContent=pdfDoc.numPages;
     $('pdfPrev').disabled=num<=1;$('pdfNext').disabled=num>=pdfDoc.numPages;
     $('pdfZoomOut').disabled=pdfZoomFactor<=0.5;
     $('pdfZoomIn').disabled=pdfZoomFactor>=3;
@@ -185,7 +194,7 @@ async function openPdfResource_(r){
   $('pdfClose').classList.remove('hidden');
   $('pdfStatus').classList.remove('hidden');
   $('pdfTitle').textContent=r.title||'PDF';
-  pdfDoc=null;pdfPage=1;pdfScale=1;pdfFitScale=1;pdfZoomFactor=1;$('pdfPageInfo').textContent='Memuat...';
+  pdfDoc=null;pdfPage=1;pdfScale=1;pdfFitScale=1;pdfZoomFactor=1;$('pdfPageInfo').textContent='1 / 1';$('pdfPageInput').value=1;$('pdfPageInput').max=1;$('pdfPageTotal').textContent='1';
   $('pdfCanvas').style.width='1px';$('pdfCanvas').style.height='1px';
   const bytes=await loadPdfFromDrive_(driveId);
   pdfDoc=await pdfjsLib.getDocument({data:bytes}).promise;
@@ -205,6 +214,19 @@ $('closeViewer').onclick=closeViewer_;$('closeViewer').classList.add('hidden');
 $('pdfClose').onclick=closeViewer_;
 $('pdfPrev').addEventListener('click',()=>{if(pdfDoc&&pdfPage>1){pdfPage-=1;renderPdfPage_(pdfPage)}});
 $('pdfNext').addEventListener('click',()=>{if(pdfDoc&&pdfPage<pdfDoc.numPages){pdfPage+=1;renderPdfPage_(pdfPage)}});
+function goToPdfPage_(){
+  if(!pdfDoc)return;
+  const input=$('pdfPageInput');
+  let target=parseInt(input.value,10);
+  if(!Number.isFinite(target))target=pdfPage;
+  target=Math.max(1,Math.min(pdfDoc.numPages,target));
+  input.value=target;
+  if(target!==pdfPage){pdfPage=target;renderPdfPage_(pdfPage)}
+  else input.blur();
+}
+$('pdfGoPage').addEventListener('click',goToPdfPage_);
+$('pdfPageInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();goToPdfPage_()}});
+$('pdfPageInput').addEventListener('change',()=>{if(pdfDoc)goToPdfPage_()});
 $('pdfZoomIn').addEventListener('click',()=>{if(!pdfDoc)return;pdfZoomFactor=Math.min(3,Math.round((pdfZoomFactor+0.25)*100)/100);updatePdfScaleFromZoom_();renderPdfPage_(pdfPage)});
 $('pdfZoomOut').addEventListener('click',()=>{if(!pdfDoc)return;pdfZoomFactor=Math.max(0.5,Math.round((pdfZoomFactor-0.25)*100)/100);updatePdfScaleFromZoom_();renderPdfPage_(pdfPage)});
 window.addEventListener('resize',()=>{if(!pdfDoc||$('pdfViewer').classList.contains('hidden'))return;clearTimeout(window.__pdfResizeTimer);window.__pdfResizeTimer=setTimeout(async()=>{const page=await pdfDoc.getPage(pdfPage);await calculatePdfFitScale_(page);await renderPdfPage_(pdfPage)},120)});
