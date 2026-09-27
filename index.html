@@ -14,11 +14,13 @@
 <style>
 :root{--green:#059669;--dark:#047857;--gold:#f59e0b}*{box-sizing:border-box}body{font-family:'Plus Jakarta Sans',sans-serif;background:#f0fdf4;background-image:radial-gradient(#10b981 .75px,transparent .75px),radial-gradient(#10b981 .75px,#f0fdf4 .75px);background-size:30px 30px;background-position:0 0,15px 15px}.font-display{font-family:'Fredoka',sans-serif}.app-card{transition:.2s}.app-card:hover{transform:translateY(-4px);box-shadow:0 18px 35px rgba(15,23,42,.12)}.touch-btn{min-height:52px}.modal{background:rgba(2,6,23,.78);backdrop-filter:blur(6px)}.safe-bottom{padding-bottom:max(1rem,env(safe-area-inset-bottom))}.hide-scroll::-webkit-scrollbar{display:none}.hide-scroll{scrollbar-width:none}
 
-<style>
 .pdf-tool-btn{position:relative;z-index:100010;pointer-events:auto;-webkit-tap-highlight-color:transparent}
 #pdfToolbar{position:relative;z-index:100005}
 #pdfCanvasWrap{position:relative;z-index:1}
-</style>
+#pdfCanvas{display:block;max-width:none;height:auto;flex:0 0 auto}
+#pdfViewer{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important}
+#pdfCanvasWrap{padding:0!important;display:flex!important;align-items:flex-start!important;justify-content:center!important;overflow:auto!important}
+#pdfToolbar{min-height:58px;flex:0 0 58px}
 </style></head>
 <body class="min-h-screen text-slate-800">
 <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b-4 border-emerald-600 shadow-md"><div class="max-w-7xl mx-auto px-4 py-3"><div class="flex flex-col lg:flex-row items-center justify-between gap-3">
@@ -128,7 +130,7 @@ function getResourceViewerUrl_(resource){
   if(driveId)return 'https://drive.google.com/file/d/'+encodeURIComponent(driveId)+'/preview';
   return String(resource?.file_url||resource?.url||'').trim();
 }
-let pdfDoc=null,pdfPage=1,pdfScale=1.15,pdfRendering=false,pdfPendingPage=null;
+let pdfDoc=null,pdfPage=1,pdfScale=1,pdfFitScale=1,pdfZoomFactor=1,pdfRendering=false,pdfPendingPage=null;
 async function loadPdfFromDrive_(driveId){
   const endpoint=(window.SMART_HUB_GOOGLE_DRIVE_UPLOAD_URL||'').trim();
   if(!endpoint)throw new Error('Endpoint Google Drive belum dikonfigurasi.');
@@ -141,18 +143,34 @@ async function loadPdfFromDrive_(driveId){
   for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
   return bytes;
 }
+function updatePdfScaleFromZoom_(){
+  pdfScale=Math.max(0.25,Math.min(5,pdfFitScale*pdfZoomFactor));
+}
+async function calculatePdfFitScale_(page){
+  const wrap=$('pdfCanvasWrap');
+  const available=Math.max(320,wrap.clientWidth-2);
+  const base=page.getViewport({scale:1});
+  pdfFitScale=available/base.width;
+  updatePdfScaleFromZoom_();
+}
 async function renderPdfPage_(num){
   if(!pdfDoc)return;
   if(pdfRendering){pdfPendingPage=num;return;}
   pdfRendering=true;
   try{
     const page=await pdfDoc.getPage(num);
+    if(num===1 || !pdfFitScale) await calculatePdfFitScale_(page);
+    updatePdfScaleFromZoom_();
     const viewport=page.getViewport({scale:pdfScale});
-    const canvas=$('pdfCanvas'),ctx=canvas.getContext('2d');
+    const canvas=$('pdfCanvas'),ctx=canvas.getContext('2d',{alpha:false});
     canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
+    canvas.style.width=Math.ceil(viewport.width)+'px';
+    canvas.style.height=Math.ceil(viewport.height)+'px';
     await page.render({canvasContext:ctx,viewport}).promise;
     $('pdfPageInfo').textContent=`${num} / ${pdfDoc.numPages}`;
     $('pdfPrev').disabled=num<=1;$('pdfNext').disabled=num>=pdfDoc.numPages;
+    $('pdfZoomOut').disabled=pdfZoomFactor<=0.5;
+    $('pdfZoomIn').disabled=pdfZoomFactor>=3;
   }finally{
     pdfRendering=false;
     if(pdfPendingPage&&pdfPendingPage!==num){const n=pdfPendingPage;pdfPendingPage=null;renderPdfPage_(n)}else pdfPendingPage=null;
@@ -167,10 +185,13 @@ async function openPdfResource_(r){
   $('pdfClose').classList.remove('hidden');
   $('pdfStatus').classList.remove('hidden');
   $('pdfTitle').textContent=r.title||'PDF';
-  pdfDoc=null;pdfPage=1;pdfScale=1.0;$('pdfPageInfo').textContent='Memuat...';
+  pdfDoc=null;pdfPage=1;pdfScale=1;pdfFitScale=1;pdfZoomFactor=1;$('pdfPageInfo').textContent='Memuat...';
+  $('pdfCanvas').style.width='1px';$('pdfCanvas').style.height='1px';
   const bytes=await loadPdfFromDrive_(driveId);
   pdfDoc=await pdfjsLib.getDocument({data:bytes}).promise;
   $('pdfStatus').classList.add('hidden');
+  const firstPage=await pdfDoc.getPage(1);
+  await calculatePdfFitScale_(firstPage);
   await renderPdfPage_(1);
 }
 async function openResource(id){
@@ -179,13 +200,14 @@ async function openResource(id){
   try{await openPdfResource_(r)}catch(err){console.error(err);$('pdfStatus').textContent=err.message||'PDF gagal dipaparkan.';$('pdfStatus').classList.remove('hidden');}
 }
 function openGame(id){const g=games.find(x=>String(x.id)===String(id));if(!g)return;$('pdfViewer').classList.add('hidden');$('gameViewer').classList.remove('hidden');$('pdfClose').classList.add('hidden');$('closeViewer').classList.remove('hidden');$('viewerFrame').src='';$('viewerFrame').srcdoc=g.html_code||g.html||'';$('viewer').classList.remove('hidden');document.body.style.overflow='hidden'}
-function closeViewer_(){pdfDoc=null;$('viewer').classList.add('hidden');$('pdfViewer').classList.add('hidden');$('gameViewer').classList.add('hidden');$('viewerFrame').src='';$('viewerFrame').srcdoc='';$('pdfCanvas').width=1;$('pdfCanvas').height=1;$('closeViewer').classList.add('hidden');$('pdfClose').classList.add('hidden');document.body.style.overflow=''}
-$('closeViewer').onclick=closeViewer_;
+function closeViewer_(){pdfDoc=null;pdfFitScale=1;pdfZoomFactor=1;$('viewer').classList.add('hidden');$('pdfViewer').classList.add('hidden');$('gameViewer').classList.add('hidden');$('viewerFrame').src='';$('viewerFrame').srcdoc='';$('pdfCanvas').width=1;$('pdfCanvas').height=1;$('closeViewer').classList.add('hidden');$('pdfClose').classList.add('hidden');document.body.style.overflow=''}
+$('closeViewer').onclick=closeViewer_;$('closeViewer').classList.add('hidden');
 $('pdfClose').onclick=closeViewer_;
 $('pdfPrev').addEventListener('click',()=>{if(pdfDoc&&pdfPage>1){pdfPage-=1;renderPdfPage_(pdfPage)}});
 $('pdfNext').addEventListener('click',()=>{if(pdfDoc&&pdfPage<pdfDoc.numPages){pdfPage+=1;renderPdfPage_(pdfPage)}});
-$('pdfZoomIn').addEventListener('click',()=>{if(!pdfDoc)return;pdfScale=Math.min(3.0,Math.round((pdfScale+0.2)*10)/10);renderPdfPage_(pdfPage)});
-$('pdfZoomOut').addEventListener('click',()=>{if(!pdfDoc)return;pdfScale=Math.max(0.5,Math.round((pdfScale-0.2)*10)/10);renderPdfPage_(pdfPage)});
+$('pdfZoomIn').addEventListener('click',()=>{if(!pdfDoc)return;pdfZoomFactor=Math.min(3,Math.round((pdfZoomFactor+0.25)*100)/100);updatePdfScaleFromZoom_();renderPdfPage_(pdfPage)});
+$('pdfZoomOut').addEventListener('click',()=>{if(!pdfDoc)return;pdfZoomFactor=Math.max(0.5,Math.round((pdfZoomFactor-0.25)*100)/100);updatePdfScaleFromZoom_();renderPdfPage_(pdfPage)});
+window.addEventListener('resize',()=>{if(!pdfDoc||$('pdfViewer').classList.contains('hidden'))return;clearTimeout(window.__pdfResizeTimer);window.__pdfResizeTimer=setTimeout(async()=>{const page=await pdfDoc.getPage(pdfPage);await calculatePdfFitScale_(page);await renderPdfPage_(pdfPage)},120)});
 
 document.addEventListener('keydown',e=>{
   if($('viewer').classList.contains('hidden'))return;
