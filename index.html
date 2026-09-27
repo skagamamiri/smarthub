@@ -117,29 +117,58 @@ function getResourceDirectUrl_(resource){
 }
 
 function openResource(id){
-  const r=resources.find(x=>String(x.id)===String(id));
-  if(!r)return;
 
-  const driveId=getDriveFileId_(r);
-  let url='';
-  if(driveId){
-    // Paparkan terus dalam halaman menggunakan PDF viewer terbina dalam browser.
-    // Tiada popup dan tiada iframe.
-    url='https://drive.google.com/uc?export=download&id='+encodeURIComponent(driveId);
-  }else{
-    url=String(r.file_url || r.preview_url || r.previewUrl || r.url || '').trim();
+  const r = resources.find(x => String(x.id) === String(id));
+  if (!r) return;
+
+  const driveId = getDriveFileId_(r);
+
+  let viewerUrl = '';
+
+  if (driveId) {
+    // Google Drive PDF Preview
+    viewerUrl =
+      'https://drive.google.com/file/d/' +
+      encodeURIComponent(driveId) +
+      '/preview';
+  } else {
+    viewerUrl = String(
+      r.preview_url ||
+      r.previewUrl ||
+      r.file_url ||
+      r.url ||
+      ''
+    ).trim();
   }
 
-  if(!url){toast('Bahan belum mempunyai fail atau URL.');return;}
+  if (!viewerUrl) {
+    toast('Bahan belum mempunyai fail atau URL.');
+    return;
+  }
 
-  $('viewerTitle').textContent=r.title||'Bahan';
-  $('pdfFallback').href=url;
-  $('pdfObject').setAttribute('data',url);
+  $('viewerTitle').textContent = r.title || 'Bahan';
+
+  // Tukar paparan PDF kepada Google Drive Viewer
+  $('pdfStage').innerHTML = `
+    <iframe
+      id="pdfDriveFrame"
+      src="${viewerUrl}"
+      class="w-full h-[75vh] rounded-2xl bg-white shadow border-0"
+      style="min-height:75vh;"
+      allow="autoplay"
+      allowfullscreen>
+    </iframe>
+  `;
+
+  // Kekalkan halaman SMART HUB
   $('resources').classList.add('hidden');
   $('viewer').classList.remove('hidden');
-  window.scrollTo({top:0,behavior:'smooth'});
-}
 
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+}
 function openGame(id){
   const g=games.find(x=>String(x.id)===String(id));
   if(!g)return;
