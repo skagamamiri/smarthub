@@ -1,33 +1,25 @@
-SMART HUB V1.1
-Pusat Pembelajaran Digital SK Agama (MIS) Miri
+SMART HUB PWA V11
+=================
 
-Fungsi V1.1:
-- Portal Smartboard mesra sentuhan
-- Buku Teks, Buku Aktiviti, Video, Latihan, Rujukan
-- Permainan / HTML interaktif
-- Supabase database pusat
-- Supabase Auth untuk Zon Guru
-- Upload fail ke Supabase Storage
-- Guru boleh tambah dan hapus bahan/permainan
-- PWA Android
+Fix utama:
+- CSS Install/Smartboard tidak lagi terpapar sebagai teks di halaman.
+- JavaScript utama dipindahkan ke app.js supaya mudah dimuat turun dan dikekalkan.
+- Service Worker dikemas kini untuk cache app.js.
+- PDF viewer, video viewer, game viewer, Supabase dan Google Drive flow dikekalkan.
+- PWA manifest kekal landscape/standalone.
 
-SETUP SUPABASE
-1. Cipta project Supabase.
-2. Buka SQL Editor dan jalankan supabase_schema.sql.
-3. Di Authentication > Users, cipta akaun guru.
-4. Buka index.html.
-5. Isi CONFIG.SUPABASE_URL dan CONFIG.SUPABASE_ANON_KEY.
-6. Host fail ini pada GitHub Pages / Cloudflare Pages.
-7. Buka URL pada Smartboard dan install sebagai PWA jika browser menyokongnya.
+Fail yang perlu berada dalam root GitHub Pages:
+- index.html
+- app.js
+- manifest.json
+- sw.js
+- supabase-config.js
+- smart-hub-logo.png   <-- kekalkan logo sedia ada dalam repo
 
-NOTA KESELAMATAN
-- Jangan masukkan service_role key ke dalam index.html.
-- Hanya anon/public key digunakan pada frontend.
-- Polisi V1.1 membenarkan pengguna authenticated mengurus kandungan. Untuk sekolah dengan ramai guru, peranan admin/teacher boleh diperketatkan pada fasa seterusnya.
+Jika repo sedia ada sudah mempunyai supabase-config.js yang lebih baharu, gunakan fail repo tersebut.
 
-
-Google Drive root folder configured: 174lCIFRIMH_tThruGFr9hKrtOF-6N2jl
-Google Apps Script Web App configured in supabase-config.js.
-
-
-V6 upload fix: resources insert now supplies both category and type, plus drive_file_id, matching the current Supabase schema.
+Selepas upload:
+1. Commit/push semua fail.
+2. Tunggu GitHub Pages deploy.
+3. Buka SMART HUB dan hard refresh.
+4. Pada Android Smartboard, gunakan Install jika prompt tersedia.

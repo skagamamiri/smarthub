@@ -6,5 +6,4 @@ window.SMART_HUB_SUPABASE = {
 };
 
 // Google Apps Script Web App endpoint for Google Drive uploads.
-// Replace this placeholder after deploying the Apps Script included in this package.
 window.SMART_HUB_GOOGLE_DRIVE_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzkFj794K6GpG5_5SBkOZ_lyMD0WnekIEqhWdsYqWa5-gGvsTMaPqHMSlLbiIalhiVP/exec';
