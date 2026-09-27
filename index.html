@@ -255,58 +255,57 @@ function getResourceDirectUrl_(resource){
   return String(resource?.file_url || resource?.preview_url || resource?.previewUrl || resource?.url || '').trim();
 }
 
-function openResource(id){
+function openResource(id) {
 
-  const r = resources.find(x => String(x.id) === String(id));
-  if (!r) return;
+    const r = resources.find(x => String(x.id) === String(id));
 
-  const driveId = getDriveFileId_(r);
+    if (!r) return;
 
-  let viewerUrl = '';
+    const driveId = getDriveFileId_(r);
 
-  if (driveId) {
-    // Google Drive PDF Preview
-    viewerUrl =
-      'https://drive.google.com/file/d/' +
-      encodeURIComponent(driveId) +
-      '/preview';
-  } else {
-    viewerUrl = String(
-      r.preview_url ||
-      r.previewUrl ||
-      r.file_url ||
-      r.url ||
-      ''
-    ).trim();
-  }
+    let url = '';
 
-  if (!viewerUrl) {
-    toast('Bahan belum mempunyai fail atau URL.');
-    return;
-  }
+    if (driveId) {
 
-  $('viewerTitle').textContent = r.title || 'Bahan';
+        // Kekalkan URL yang telah berjaya memaparkan PDF
+        url =
+            'https://drive.google.com/uc?export=download&id=' +
+            encodeURIComponent(driveId);
 
-  // Tukar paparan PDF kepada Google Drive Viewer
-  $('pdfStage').innerHTML = `
-    <iframe
-      id="pdfDriveFrame"
-      src="${viewerUrl}"
-      class="w-full h-[80vh] bg-white border-0"
-      style="width:100%; height:80vh; display:block; border:0;"
-      allow="autoplay"
-      allowfullscreen>
-    </iframe>
-  `;
+    } else {
 
-  // Kekalkan halaman SMART HUB
-  $('resources').classList.add('hidden');
-  $('viewer').classList.remove('hidden');
+        url = String(
+            r.file_url ||
+            r.preview_url ||
+            r.previewUrl ||
+            r.url ||
+            ''
+        ).trim();
 
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  });
+    }
+
+    if (!url) {
+        toast('Bahan belum mempunyai fail atau URL.');
+        return;
+    }
+
+    // Set PDF
+    $('pdfFallback').href = url;
+
+    $('pdfObject').setAttribute('data', url);
+
+    // Paparkan fullscreen
+    $('resources').classList.add('hidden');
+    $('viewer').classList.remove('hidden');
+
+    // Kunci scroll halaman utama
+    document.body.classList.add('viewer-open');
+
+    // Pergi ke atas
+    window.scrollTo({
+        top: 0,
+        behavior: 'instant'
+    });
 }
 function openGame(id){
   const g=games.find(x=>String(x.id)===String(id));
@@ -341,12 +340,21 @@ stage.innerHTML = `
   const frame=$('viewerGameFrame');
   frame.srcdoc=g.html_code||g.html||'';
 }
-$('closeViewer').onclick=()=>{
-  $('viewer').classList.add('hidden');
-  $('resources').classList.remove('hidden');
-  $('pdfObject').setAttribute('data','');
-  $('pdfFallback').href='#';
-  $('pdfStage').innerHTML='<object id="pdfObject" class="w-full h-[75vh] rounded-2xl bg-white shadow" type="application/pdf"><div class="p-8 text-center"><div class="text-5xl">📄</div><h3 class="font-black font-display text-xl mt-3">PDF tidak dapat dipaparkan terus</h3><p class="text-sm text-slate-500 mt-2">Gunakan butang di bawah untuk membuka fail.</p><a id="pdfFallback" href="#" target="_blank" rel="noopener noreferrer" class="inline-block mt-4 bg-emerald-600 text-white px-5 py-3 rounded-xl font-black">Buka PDF</a></div></object>';
+$('closeViewer').onclick = () => {
+
+    // Tutup viewer
+    $('viewer').classList.add('hidden');
+
+    // Paparkan semula halaman bahan
+    $('resources').classList.remove('hidden');
+
+    // Benarkan scroll semula
+    document.body.classList.remove('viewer-open');
+
+    // Hentikan PDF
+    $('pdfObject').setAttribute('data', '');
+
+    $('pdfFallback').href = '#';
 };
 $('resourceSearch').oninput=renderResources;$('gameSearch').oninput=renderGames;yearButtons('yearFilters',y=>{activeResourceYear=y;renderResources()});yearButtons('gameYears',y=>{activeGameYear=y;renderGames()});document.querySelectorAll('.rtype').forEach(b=>b.onclick=()=>{document.querySelectorAll('.rtype').forEach(x=>x.className='rtype px-3 py-2 rounded-xl bg-slate-100 font-bold');b.className='rtype active px-3 py-2 rounded-xl bg-emerald-600 text-white font-bold';activeType=b.dataset.type;renderResources()});
 async function loadFromSupabase(){if(!sb)return;try{const [rr,gg]=await Promise.all([sb.from('resources').select('*').order('created_at',{ascending:false}),sb.from('games').select('*').order('created_at',{ascending:false})]);if(!rr.error&&rr.data?.length){resources=rr.data;renderResources()}if(!gg.error&&gg.data?.length){games=gg.data;renderGames()}}catch(e){console.warn(e)}}
