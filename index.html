@@ -101,7 +101,7 @@ function getDriveFileId_(resource){
 }
 function getResourceViewerUrl_(resource){
   const driveId=getDriveFileId_(resource);
-  if(driveId)return 'https://drive.google.com/file/d/'+encodeURIComponent(driveId)+'/preview';
+  if(driveId)return 'https://drive.google.com/file/d/'+encodeURIComponent(driveId)+'/preview?usp=embed&rm=minimal';
   return String(resource?.file_url||resource?.url||'').trim();
 }
 function openResource(id){
@@ -111,7 +111,23 @@ function openResource(id){
   $('viewerFrame').src='';
   $('viewerFrame').srcdoc='';
   if(url){
-    $('viewerFrame').src=url;
+    const frame=$('viewerFrame');
+    frame.dataset.resourceUrl=url;
+    frame.dataset.fallbackTried='0';
+    frame.src=url;
+    // Google Drive's embedded viewer can occasionally return a blank frame on GitHub Pages.
+    // Retry through Google Docs Viewer without opening a new tab.
+    clearTimeout(window.__smartHubPdfTimer);
+    window.__smartHubPdfTimer=setTimeout(()=>{
+      if(frame.dataset.resourceUrl===url && frame.dataset.fallbackTried==='0'){
+        const m=url.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
+        if(m){
+          frame.dataset.fallbackTried='1';
+          const downloadUrl='https://drive.google.com/uc?export=download&id='+encodeURIComponent(m[1]);
+          frame.src='https://docs.google.com/gview?embedded=1&url='+encodeURIComponent(downloadUrl);
+        }
+      }
+    },3500);
   }else{
     $('viewerFrame').srcdoc=`<html><body style="font-family:Arial;padding:40px;text-align:center"><h1>${r.icon||'📚'} ${r.title}</h1><p>Bahan belum mempunyai fail atau URL.</p></body></html>`;
   }
@@ -119,7 +135,7 @@ function openResource(id){
   document.body.style.overflow='hidden';
 }
 function openGame(id){const g=games.find(x=>String(x.id)===String(id));if(!g)return;$('viewerFrame').src='';$('viewerFrame').srcdoc=g.html_code||g.html||'';$('viewer').classList.remove('hidden');document.body.style.overflow='hidden'}
-$('closeViewer').onclick=()=>{$('viewer').classList.add('hidden');$('viewerFrame').src='';$('viewerFrame').srcdoc='';document.body.style.overflow=''};
+$('closeViewer').onclick=()=>{$('viewer').classList.add('hidden');clearTimeout(window.__smartHubPdfTimer);$('viewerFrame').dataset.resourceUrl='';$('viewerFrame').src='';$('viewerFrame').srcdoc='';document.body.style.overflow=''};
 $('resourceSearch').oninput=renderResources;$('gameSearch').oninput=renderGames;yearButtons('yearFilters',y=>{activeResourceYear=y;renderResources()});yearButtons('gameYears',y=>{activeGameYear=y;renderGames()});document.querySelectorAll('.rtype').forEach(b=>b.onclick=()=>{document.querySelectorAll('.rtype').forEach(x=>x.className='rtype px-3 py-2 rounded-xl bg-slate-100 font-bold');b.className='rtype active px-3 py-2 rounded-xl bg-emerald-600 text-white font-bold';activeType=b.dataset.type;renderResources()});
 async function loadFromSupabase(){if(!sb)return;try{const [rr,gg]=await Promise.all([sb.from('resources').select('*').order('created_at',{ascending:false}),sb.from('games').select('*').order('created_at',{ascending:false})]);if(!rr.error&&rr.data?.length){resources=rr.data;renderResources()}if(!gg.error&&gg.data?.length){games=gg.data;renderGames()}}catch(e){console.warn(e)}}
 function renderTeacherState(){if(user){$('teacherLogin').classList.add('hidden');$('teacherPanel').classList.remove('hidden');$('teacherEmail').textContent=(user.email||'')+(isAdmin?' • Admin Sekolah':'');$('teacherRoleLabel').textContent=isAdmin?'Admin Sekolah':'Studio Guru';$('adminPanel').classList.toggle('hidden',!isAdmin);loadManageList();if(isAdmin)loadAdminTeachers()}else{$('teacherLogin').classList.remove('hidden');$('teacherPanel').classList.add('hidden');$('adminPanel').classList.add('hidden')}}
