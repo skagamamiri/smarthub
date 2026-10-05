@@ -91,8 +91,10 @@ public class MainActivity extends Activity {
             }
         });
 
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(dp(64), dp(64), Gravity.TOP | Gravity.END);
-        params.setMargins(0, dp(16), dp(16), 0);
+        // Refresh berada di kanan bawah supaya tidak mengganggu butang Tutup di bahagian atas.
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                dp(64), dp(64), Gravity.BOTTOM | Gravity.END);
+        params.setMargins(0, 0, dp(16), dp(16));
         root.addView(refreshButton, params);
     }
 
