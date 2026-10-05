@@ -6,8 +6,8 @@
     <application
         android:allowBackup="true"
         android:label="SMART HUB"
-        android:icon="@drawable/ic_launcher"
-        android:roundIcon="@drawable/ic_launcher"
+        android:icon="@drawable/smart_hub_logo"
+        android:roundIcon="@drawable/smart_hub_logo"
         android:supportsRtl="true"
         android:usesCleartextTraffic="false"
         android:theme="@style/AppTheme">
