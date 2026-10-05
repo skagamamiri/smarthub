@@ -1,4 +1,4 @@
-const CACHE='smart-hub-shell-v12';
+const CACHE='smart-hub-shell-v13';
 const SHELL=['./','./index.html','./manifest.json','./app.js','./large-upload.js','./supabase-config.js','./smart-hub-logo.png'];
 
 self.addEventListener('install',e=>{
@@ -40,8 +40,33 @@ async function patchedIndex_(request){
   if(!original) return new Response('SMART HUB offline.',{status:503,headers:{'Content-Type':'text/plain;charset=utf-8'}});
   try{
     let html=await original.text();
+
+    // Keep the long "Kandungan Terkini" list inside its own touch-scroll area.
+    // This prevents the management card from becoming excessively long when
+    // many resources/games have been added.
+    const scrollCss=`<style id="smart-hub-manage-scroll">
+#manageList{
+  max-height:52vh !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  padding-right:8px !important;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+}
+#manageList::-webkit-scrollbar{width:8px}
+#manageList::-webkit-scrollbar-track{background:#f1f5f9;border-radius:999px}
+#manageList::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:999px}
+@media (orientation:landscape) and (min-width:900px){
+  #manageList{max-height:calc(100vh - 420px) !important;min-height:140px !important}
+}
+</style>`;
+    if(!html.includes('smart-hub-manage-scroll')){
+      html=html.replace('</head>',scrollCss+'</head>');
+    }
+
     if(!html.includes('large-upload.js')){
-      html=html.replace('</body>','<script src="./large-upload.js?v=12"></script></body>');
+      html=html.replace('</body>','<script src="./large-upload.js?v=13"></script></body>');
     }
     const headers=new Headers(original.headers);
     headers.delete('content-length');
@@ -57,8 +82,7 @@ self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET' || u.origin!==location.origin) return;
 
   // Always serve a fresh patched application shell. This guarantees that the
-  // large-file uploader is actually loaded; a service worker cannot inject a
-  // JavaScript file merely by placing it in the cache.
+  // large-file uploader and the management-list scroll fix are loaded.
   if(e.request.mode==='navigate' || u.pathname.endsWith('/index.html')){
     e.respondWith(patchedIndex_(e.request));
     return;
