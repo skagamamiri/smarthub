@@ -6,11 +6,11 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.provider.Settings;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,11 +22,11 @@ import android.webkit.RenderProcessGoneDetail;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
-import android.webkit.WebResourceError;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
@@ -37,6 +37,7 @@ public class MainActivity extends Activity {
 
     private FrameLayout root;
     private WebView webView;
+    private TextView refreshButton;
     private View customView;
     private WebChromeClient.CustomViewCallback customViewCallback;
     private ValueCallback<Uri[]> filePathCallback;
@@ -57,11 +58,46 @@ public class MainActivity extends Activity {
         root.addView(webView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
+
+        createRefreshButton();
         setContentView(root);
 
         configureWebView();
         webView.loadUrl(START_URL);
         lastPageLoad = System.currentTimeMillis();
+    }
+
+    private void createRefreshButton() {
+        refreshButton = new TextView(this);
+        refreshButton.setText("↻");
+        refreshButton.setTextColor(Color.WHITE);
+        refreshButton.setTextSize(30);
+        refreshButton.setGravity(Gravity.CENTER);
+        refreshButton.setContentDescription("Refresh SMART HUB");
+        refreshButton.setElevation(dp(8));
+        refreshButton.setPadding(0, 0, 0, dp(2));
+
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(Color.rgb(5, 150, 105));
+        background.setCornerRadius(dp(18));
+        background.setStroke(dp(1), Color.argb(180, 255, 255, 255));
+        refreshButton.setBackground(background);
+
+        refreshButton.setOnClickListener(v -> {
+            if (webView != null) {
+                lastPageLoad = System.currentTimeMillis();
+                webView.reload();
+                Toast.makeText(MainActivity.this, "SMART HUB sedang dimuat semula...", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(dp(64), dp(64), Gravity.TOP | Gravity.END);
+        params.setMargins(0, dp(16), dp(16), 0);
+        root.addView(refreshButton, params);
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     private void configureWebView() {
@@ -111,7 +147,7 @@ public class MainActivity extends Activity {
                 root.removeView(webView);
                 webView.destroy();
                 webView = new WebView(MainActivity.this);
-                root.addView(webView, new FrameLayout.LayoutParams(
+                root.addView(webView, 0, new FrameLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT));
                 configureWebView();
@@ -155,6 +191,7 @@ public class MainActivity extends Activity {
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         Gravity.CENTER));
                 webView.setVisibility(View.GONE);
+                refreshButton.setVisibility(View.GONE);
                 enterImmersiveMode();
             }
 
@@ -228,6 +265,7 @@ public class MainActivity extends Activity {
         root.removeView(customView);
         customView = null;
         webView.setVisibility(View.VISIBLE);
+        refreshButton.setVisibility(View.VISIBLE);
         if (customViewCallback != null) {
             customViewCallback.onCustomViewHidden();
             customViewCallback = null;
