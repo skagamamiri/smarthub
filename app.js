@@ -365,7 +365,7 @@ $('refreshTeachersBtn').onclick=loadAdminTeachers;
 $('teacherAdminSearch').oninput=renderAdminTeachers;
 document.querySelectorAll('.refresh-manage').forEach(b=>b.onclick=()=>{loadFromSupabase();loadManageList()});
 /* ===== ZON GURU: TAB, SUBJEK, PRATONTON & SENARAI PROMPT ===== */
-var SUBJECTS=['Bahasa Melayu','English','Mathematic','Science','Pendidikan Jasmani','Pendidikan Kesihatan','Pendidikan Seni Visual','Sejarah','Reka Bentuk dan Teknologi','Bahasa Arab','Pendidikan Islam','Tasmik'];
+var SUBJECTS=['Bahasa Melayu','English','Mathematics','Science','Pendidikan Jasmani','Pendidikan Kesihatan','Pendidikan Seni Visual','Sejarah','Reka Bentuk dan Teknologi','Bahasa Arab','Pendidikan Islam','Tasmik'];
 document.querySelectorAll('.subject-select').forEach(sel=>{sel.insertAdjacentHTML('beforeend',SUBJECTS.map(x=>`<option>${x}</option>`).join(''))});
 
 var activeTeacherTab='tabBahan';
