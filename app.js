@@ -405,24 +405,81 @@ var PROMPT_CATS=[
 var catLabel=id=>(PROMPT_CATS.find(c=>c.id===id)||{label:'✨ Lain-lain'}).label;
 
 var STARTER_PROMPTS=[
-{id:'s1',category:'interaktif',title:'Jana permainan interaktif (single-file HTML)',prompt_text:`Anda ialah pembangun permainan pendidikan untuk murid sekolah rendah di Malaysia.
+{id:'s1',category:'interaktif',builder:true,title:'Jana permainan interaktif (Mod Individu & Kumpulan)',prompt_text:`Anda ialah pereka permainan pendidikan dan pembangun web yang mahir dalam KSSR (Semakan) Malaysia.
 
-Bina SATU fail HTML lengkap (HTML + CSS + JavaScript dalam satu fail, tanpa fail luar) untuk permainan interaktif:
-- Mata pelajaran: [MATA PELAJARAN]
-- Tahun: [TAHUN]
-- Tajuk / topik: [TAJUK]
-- Jenis permainan: [cth: padan pasangan / seret dan lepas / teka gambar / roda bertuah]
-- Bahasa paparan: [Bahasa Melayu / English / Arab]
+Tugas anda: bina SATU permainan interaktif dalam satu fail HTML (HTML + CSS + JavaScript dalam satu fail) yang boleh dibuka terus di pelayar web dan berfungsi di komputer, tablet, TV pintar dan Smartboard (skrin sentuh).
 
-Keperluan:
-1. Sesuai untuk Smartboard (skrin landskap, butang besar, mudah disentuh).
-2. Warna ceria, fon besar dan mudah dibaca murid.
-3. Ada skor, bunyi atau animasi ringkas apabila betul/salah.
-4. Ada butang "Main Semula".
-5. Sekurang-kurangnya [10] soalan/item berdasarkan DSKP.
-6. Tidak memerlukan internet selepas dibuka.
+=== MAKLUMAT GURU ===
+Mata pelajaran       : [MATA PELAJARAN]
+Tahun                : [TAHUN]
+Tema / Unit / Tajuk  : [TAJUK]
+Standard Kandungan   : [STANDARD KANDUNGAN]
+Standard Pembelajaran: [STANDARD PEMBELAJARAN]
+Muka surat buku teks : [MUKA SURAT]
+Bahasa permainan     : [BAHASA]
+Bilangan soalan      : [BILANGAN SOALAN]
+Had masa per soalan  : [HAD MASA]
+Tahap kesukaran      : [TAHAP KESUKARAN]
+Jenis permainan      : [JENIS PERMAINAN]
+Mod permainan        : [MOD PERMAINAN]
+Kandungan tambahan   : [NOTA / SOALAN SENDIRI (jika ada)]
 
-Berikan kod penuh sahaja dalam satu blok kod supaya saya boleh salin terus.`},
+=== SENARAI JENIS PERMAINAN ===
+1. Kuiz Pelbagai Pilihan (A/B/C/D)
+2. Betul atau Salah
+3. Padankan Pasangan
+4. Isi Tempat Kosong
+5. Susun Huruf / Susun Perkataan menjadi ayat
+6. Seret & Lepas ke Kategori
+7. Kad Memori (cari pasangan kad terbalik)
+8. Roda Putar Soalan
+9. Lumba ke Garisan Penamat (jawapan betul = maju)
+10. Pecahkan Belon Jawapan Betul
+11. Teka Gambar / Emoji (guna emoji atau SVG, tiada gambar luar)
+12. Susun Mengikut Urutan (langkah, kitaran, kronologi)
+Jika jenis permainan ditulis "AI pilih", pilih jenis yang paling sesuai dengan tajuk dan nyatakan sebabnya.
+
+=== KEPERLUAN KANDUNGAN ===
+- Semua soalan MESTI selaras dengan DSKP dan buku teks bagi tahun dan tajuk di atas. Jangan masukkan fakta di luar tahap murid.
+- Gunakan istilah yang sama seperti dalam buku teks.
+- Setiap soalan ada maklum balas ringkas apabila salah (terangkan jawapan betul dalam 1 ayat).
+- Jika maklumat guru tidak lengkap, nyatakan andaian anda dalam komen di bahagian atas kod.
+- Simpan semua soalan dalam satu array JavaScript di bahagian atas skrip supaya guru mudah menyunting.
+
+=== SKRIN TETAPAN (sebelum mula) ===
+- Tajuk permainan, mata pelajaran, tahun dan Standard Pembelajaran.
+- Pilihan MOD: Mod Individu atau Mod Kumpulan (ikut "Mod permainan" di atas; jika "Kedua-dua", beri kedua-dua pilihan).
+- Mod Kumpulan: pilih 2, 3 atau 4 kumpulan (MAKSIMUM 4), ruang namakan kumpulan (lalai: Merah, Biru, Hijau, Kuning), setiap kumpulan berwarna tersendiri.
+- Butang Hidup/Mati bunyi, butang Skrin Penuh dan butang MULA.
+
+=== MOD INDIVIDU ===
+- Satu murid bermain pada skrin penuh.
+- Papar nombor soalan, markah, pemasa dan bar kemajuan.
+- Di akhir: markah, peratus, bintang (1–3), senarai soalan yang salah beserta jawapan betul, butang "Main Semula".
+
+=== MOD KUMPULAN — SKRIN BERPECAH (SPLIT SCREEN) ===
+- 2 kumpulan: kiri | kanan. 3 kumpulan: tiga lajur. 4 kumpulan: grid 2 x 2.
+- Setiap panel BERFUNGSI BEBAS: soalan, pemasa, markah dan kemajuan sendiri; murid menjawab serentak tanpa mengganggu panel lain.
+- Gunakan Pointer Events supaya sentuhan serentak (multi-touch) di Smartboard/TV sentuh berfungsi untuk semua panel.
+- Semua kumpulan dapat SET SOALAN YANG SAMA, tetapi susunan soalan dan pilihan jawapan dirawakkan bagi setiap kumpulan.
+- Panel berwarna ikut kumpulan dengan nama kumpulan jelas di atas.
+- Teks dan butang cukup besar walaupun dalam grid 2 x 2 (butang minimum ±60px tinggi).
+- Papan markah langsung kecil di tengah/atas skrin.
+- Kumpulan yang selesai memaparkan "SELESAI!" dan menunggu kumpulan lain.
+- Di akhir: papan kedudukan (Tempat 1–4) dengan animasi juara/konfeti, markah dan masa setiap kumpulan (masa sebagai pemutus seri), butang "Main Semula" dan "Kembali ke Tetapan".
+
+=== REKA BENTUK & TEKNIKAL ===
+- Satu fail HTML sahaja, tiada pemasangan, tiada log masuk.
+- Berfungsi tanpa internet: tiada imej/fail luar; guna emoji, CSS dan SVG dalam kod.
+- Bunyi menggunakan Web Audio API (betul, salah, tamat masa, menang).
+- Reka bentuk ceria, warna terang, fon besar, mesra murid sekolah rendah.
+- Responsif untuk skrin landskap (TV/projektor) dan tablet.
+- Butang "Jeda" dan "Keluar" untuk guru.
+- Kod kemas dengan komen dalam Bahasa Melayu.
+
+=== OUTPUT ===
+1. Kod HTML penuh dalam satu blok kod supaya boleh disalin terus.
+2. Selepas kod: senarai Standard Pembelajaran yang diliputi, senarai semua soalan dan jawapan (untuk semakan guru), dan cara ringkas menukar/menambah soalan.`},
 {id:'s2',category:'interaktif',title:'Kuiz aneka pilihan dengan pemasa',prompt_text:`Bina satu fail HTML tunggal (HTML, CSS dan JS dalam satu fail) untuk kuiz aneka pilihan:
 - Mata pelajaran: [MATA PELAJARAN]
 - Tahun: [TAHUN]
@@ -529,6 +586,7 @@ function renderPrompts(){
       <button type="button" onclick="copyPrompt('${p.id}',this)" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-black"><i class="fa-solid fa-copy mr-1"></i> Salin Prompt</button>
       <button type="button" onclick="togglePrompt('${p.id}',this)" class="px-4 bg-slate-100 rounded-xl font-bold">Lihat</button>
     </div>
+    ${p.builder?`<button type="button" onclick="openGameBuilder()" class="w-full bg-amber-400 text-slate-950 py-3 rounded-xl font-black"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Isi Borang &amp; Jana Prompt</button>`:''}
     <div class="flex items-center justify-between gap-2 text-[11px] text-slate-500">
       <span class="truncate">oleh <b>${escapeHtml(p.author_name||'Guru')}</b>${p.starter?'':` • ${Number(p.copy_count||0)} kali disalin`}</span>
       ${canEditPrompt_(p)?`<span class="flex gap-1 shrink-0"><button type="button" onclick="editPrompt('${p.id}')" class="px-2 py-1 bg-slate-100 rounded-lg font-bold" style="min-height:0">Edit</button><button type="button" onclick="deletePrompt('${p.id}')" class="px-2 py-1 bg-red-100 text-red-700 rounded-lg font-bold" style="min-height:0">Hapus</button></span>`:''}
@@ -598,6 +656,67 @@ $('promptForm').onsubmit=async e=>{
   if(res.error){$('promptMsg').textContent=res.error.message;return}
   closePromptForm_();await loadPrompts();toast(id?'Prompt dikemas kini.':'Prompt dikongsi. Terima kasih!');
 };
+
+/* ---------- Borang Jana Prompt Permainan (untuk prompt s1) ---------- */
+var GAME_TYPES=['AI pilih yang paling sesuai','Kuiz Pelbagai Pilihan (A/B/C/D)','Betul atau Salah','Padankan Pasangan','Isi Tempat Kosong','Susun Huruf / Susun Perkataan','Seret & Lepas ke Kategori','Kad Memori','Roda Putar Soalan','Lumba ke Garisan Penamat','Pecahkan Belon Jawapan Betul','Teka Gambar / Emoji','Susun Mengikut Urutan'];
+function gbField_(label,html){return `<label class="block"><span class="block text-xs font-black text-slate-600 mb-1">${label}</span>${html}</label>`}
+function buildGameBuilder_(){
+  if($('gameBuilder'))return;
+  const inp='w-full p-3 border-2 border-slate-200 rounded-xl';
+  const opts=a=>a.map(x=>`<option>${escapeHtml(x)}</option>`).join('');
+  const wrap=document.createElement('div');
+  wrap.id='gameBuilder';
+  wrap.className='hidden fixed inset-0 z-[90] bg-slate-950/70 flex items-end sm:items-center justify-center p-0 sm:p-4';
+  wrap.innerHTML=`<div class="bg-white w-full sm:max-w-3xl max-h-[95vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl p-5 space-y-4">
+    <div class="flex items-start justify-between gap-3"><div><h3 class="font-black font-display text-xl">🎮 Jana Prompt Permainan</h3><p class="text-xs text-slate-500 mt-1">Isi borang, tekan Salin, kemudian tampal ke ChatGPT / Gemini / Claude.</p></div><button type="button" id="gbClose" class="px-3 py-2 bg-slate-100 rounded-xl font-bold">Tutup</button></div>
+    <div class="grid sm:grid-cols-2 gap-3">
+      ${gbField_('Mata pelajaran',`<select id="gbSubject" class="${inp}"><option value="">— Pilih —</option>${opts(SUBJECTS)}</select>`)}
+      ${gbField_('Tahun',`<select id="gbYear" class="${inp}"><option value="">— Pilih —</option>${opts(['1','2','3','4','5','6'].map(y=>'Tahun '+y))}</select>`)}
+      <div class="sm:col-span-2">${gbField_('Tema / Unit / Tajuk',`<input id="gbTopic" class="${inp}" placeholder="cth: Unit 3 – Pecahan">`)}</div>
+      ${gbField_('Standard Kandungan',`<input id="gbSK" class="${inp}" placeholder="cth: 3.1 Pecahan wajar">`)}
+      ${gbField_('Standard Pembelajaran',`<input id="gbSP" class="${inp}" placeholder="cth: 3.1.1, 3.1.2">`)}
+      ${gbField_('Muka surat buku teks',`<input id="gbPage" class="${inp}" placeholder="cth: 45–52">`)}
+      ${gbField_('Bahasa permainan',`<select id="gbLang" class="${inp}">${opts(['Bahasa Melayu','English','Bahasa Arab','Jawi'])}</select>`)}
+      ${gbField_('Jenis permainan',`<select id="gbType" class="${inp}">${opts(GAME_TYPES)}</select>`)}
+      ${gbField_('Mod permainan',`<select id="gbMode" class="${inp}">${opts(['Kedua-dua (Individu & Kumpulan)','Mod Individu sahaja','Mod Kumpulan sahaja (2–4 kumpulan, split screen)'])}</select>`)}
+      ${gbField_('Bilangan soalan',`<select id="gbCount" class="${inp}">${opts(['10','15','20','5'])}</select>`)}
+      ${gbField_('Had masa per soalan',`<select id="gbTime" class="${inp}">${opts(['20 saat','30 saat','15 saat','10 saat','Tiada had masa'])}</select>`)}
+      ${gbField_('Tahap kesukaran',`<select id="gbLevel" class="${inp}">${opts(['Campuran','Mudah','Sederhana','Mencabar'])}</select>`)}
+      <div class="sm:col-span-2">${gbField_('Kandungan tambahan (pilihan)',`<textarea id="gbExtra" rows="3" class="${inp}" placeholder="Tampal nota, senarai perkataan atau soalan sendiri di sini"></textarea>`)}</div>
+    </div>
+    <div><span class="block text-xs font-black text-slate-600 mb-1">Pratonton prompt</span><div id="gbPreview" class="prompt-body open bg-slate-50 rounded-xl p-3 font-mono text-slate-700" style="max-height:16rem;overflow-y:auto"></div></div>
+    <button type="button" id="gbCopy" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-black"><i class="fa-solid fa-copy mr-1"></i> Salin Prompt</button>
+  </div>`;
+  document.body.appendChild(wrap);
+  wrap.addEventListener('click',e=>{if(e.target===wrap)closeGameBuilder()});
+  $('gbClose').onclick=closeGameBuilder;
+  wrap.querySelectorAll('input,select,textarea').forEach(el=>el.addEventListener('input',renderGameBuilder_));
+  $('gbCopy').onclick=async()=>{
+    const ok=await copyText_(gameBuilderText_());
+    toast(ok?'Prompt disalin. Tampal ke ChatGPT / Gemini / Claude.':'Gagal menyalin. Pilih teks pratonton dan salin secara manual.');
+  };
+}
+function gameBuilderText_(){
+  const base=(STARTER_PROMPTS.find(p=>p.id==='s1')||{}).prompt_text||'';
+  const v=id=>($(id).value||'').trim();
+  const map={
+    '[MATA PELAJARAN]':v('gbSubject'),'[TAHUN]':v('gbYear'),'[TAJUK]':v('gbTopic'),
+    '[STANDARD KANDUNGAN]':v('gbSK'),'[STANDARD PEMBELAJARAN]':v('gbSP'),'[MUKA SURAT]':v('gbPage')||'(tiada)',
+    '[BAHASA]':v('gbLang'),'[BILANGAN SOALAN]':v('gbCount'),'[HAD MASA]':v('gbTime'),'[TAHAP KESUKARAN]':v('gbLevel'),
+    '[JENIS PERMAINAN]':v('gbType').startsWith('AI pilih')?'AI pilih':v('gbType'),'[MOD PERMAINAN]':v('gbMode'),
+    '[NOTA / SOALAN SENDIRI (jika ada)]':v('gbExtra')||'(tiada)'
+  };
+  let t=base;
+  Object.keys(map).forEach(k=>{if(map[k])t=t.split(k).join(map[k])});
+  return t;
+}
+function renderGameBuilder_(){$('gbPreview').innerHTML=highlightPh_(gameBuilderText_())}
+function openGameBuilder(){
+  buildGameBuilder_();
+  $('gameBuilder').classList.remove('hidden');document.body.style.overflow='hidden';
+  renderGameBuilder_();
+}
+function closeGameBuilder(){$('gameBuilder').classList.add('hidden');document.body.style.overflow=''}
 $('promptSearch').oninput=renderPrompts;
 renderPromptCats();renderPrompts();
 

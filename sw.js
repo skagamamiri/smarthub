@@ -1,4 +1,4 @@
-const CACHE='smart-hub-shell-v14';
+const CACHE='smart-hub-shell-v15';
 const SHELL=['./','./index.html','./manifest.json','./app.js','./large-upload.js','./supabase-config.js','./smart-hub-logo.png'];
 
 self.addEventListener('install',e=>{
