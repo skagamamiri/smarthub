@@ -248,7 +248,7 @@ document.addEventListener('keydown',e=>{
 });
 $('resourceSearch').oninput=renderResources;$('gameSearch').oninput=renderGames;yearButtons('yearFilters',y=>{activeResourceYear=y;renderResources()});yearButtons('gameYears',y=>{activeGameYear=y;renderGames()});document.querySelectorAll('.rtype').forEach(b=>b.onclick=()=>{document.querySelectorAll('.rtype').forEach(x=>x.className='rtype px-3 py-2 rounded-xl bg-slate-100 font-bold');b.className='rtype active px-3 py-2 rounded-xl bg-emerald-600 text-white font-bold';activeType=b.dataset.type;renderResources()});document.querySelectorAll('.rgrade').forEach(b=>b.onclick=()=>{document.querySelectorAll('.rgrade').forEach(x=>x.className='rgrade px-3 py-2 rounded-xl bg-slate-100 font-bold');b.className='rgrade active px-3 py-2 rounded-xl bg-emerald-600 text-white font-bold';activeResourceGrade=b.dataset.grade;renderResources()});
 async function loadFromSupabase(){if(!sb)return;try{const [rr,gg]=await Promise.all([sb.from('resources').select('*').order('created_at',{ascending:false}),sb.from('games').select('*').order('created_at',{ascending:false})]);if(!rr.error&&rr.data?.length){resources=rr.data;renderResources()}if(!gg.error&&gg.data?.length){games=gg.data;renderGames()}}catch(e){console.warn(e)}}
-function renderTeacherState(){if(user){$('teacherLogin').classList.add('hidden');$('teacherPanel').classList.remove('hidden');$('teacherEmail').textContent=(user.email||'')+(isAdmin?' • Admin Sekolah':'');$('teacherRoleLabel').textContent=isAdmin?'Admin Sekolah':'Studio Guru';$('adminPanel').classList.toggle('hidden',!isAdmin);loadManageList();if(isAdmin)loadAdminTeachers()}else{$('teacherLogin').classList.remove('hidden');$('teacherPanel').classList.add('hidden');$('adminPanel').classList.add('hidden')}}
+function renderTeacherState(){if(user){$('teacherLogin').classList.add('hidden');$('teacherPanel').classList.remove('hidden');$('teacherEmail').textContent=(user.email||'')+(isAdmin?' • Admin Sekolah':'');$('teacherRoleLabel').textContent=isAdmin?'Admin Sekolah':'Studio Guru';$('adminPanel').classList.toggle('hidden',!isAdmin);$('adminTabBtn').classList.toggle('hidden',!isAdmin);if(!isAdmin&&activeTeacherTab==='tabAdmin')showTeacherTab('tabBahan');loadManageList();loadPrompts();if(isAdmin)loadAdminTeachers()}else{$('teacherLogin').classList.remove('hidden');$('teacherPanel').classList.add('hidden');$('adminPanel').classList.add('hidden')}}
 async function getTeacherRole(email){if(!sb||!email)return null;const {data,error}=await sb.rpc('get_teacher_role',{check_email:email});if(error){console.warn('Semakan whitelist gagal:',error);return null}return data||null}
 async function verifyTeacherAccess(currentUser, showMessage=true){if(!currentUser||!sb){isAdmin=false;return false}const role=await getTeacherRole(currentUser.email);if(!role){isAdmin=false;user=null;await sb.auth.signOut();if(showMessage)$('authMsg').textContent='Akses ditolak. Akaun Google ini tidak didaftarkan sebagai guru SK Agama (MIS) Miri.';renderTeacherState();return false}user=currentUser;isAdmin=String(role).toLowerCase()==='admin';renderTeacherState();return true}
 async function login(e){e.preventDefault();if(!sb){$('authMsg').textContent='Supabase belum dikonfigurasi. Masukkan URL dan anon key dalam CONFIG.';return}const {data,error}=await sb.auth.signInWithPassword({email:$('email').value,password:$('password').value});if(error){$('authMsg').textContent=error.message;return}if(!(await verifyTeacherAccess(data.user))){return}$('authMsg').textContent='';toast('Log masuk berjaya.')}
@@ -305,7 +305,31 @@ $('resourceForm').onsubmit=async e=>{
   }catch(err){console.error(err);$('resourceMsg').textContent=err.message}
 }
 $('gameForm').onsubmit=async e=>{e.preventDefault();if(!sb||!user){$('gameMsg').textContent='Log masuk dan konfigurasi Supabase dahulu.';return}try{$('gameMsg').textContent='Menyimpan...';const payload={title:$('gameTitle').value.trim(),subject:$('gameSubject').value.trim(),year:$('gameYear').value,emoji:$('gameEmoji').value||'🎮',description:$('gameDesc').value.trim(),html_code:$('gameHtml').value};const {error}=await sb.from('games').insert(payload);if(error)throw error;$('gameForm').reset();$('gameEmoji').value='🎮';$('gameMsg').textContent='Permainan berjaya disimpan.';await loadFromSupabase();await loadManageList()}catch(err){$('gameMsg').textContent=err.message}}
-async function loadManageList(){if(!sb||!user)return;const [r,g]=await Promise.all([sb.from('resources').select('id,title,type,year,created_at').order('created_at',{ascending:false}).limit(30),sb.from('games').select('id,title,year,created_at').order('created_at',{ascending:false}).limit(30)]);const rows=[];(r.data||[]).forEach(x=>rows.push(`<div class="flex items-center justify-between gap-3 p-3 bg-slate-50 rounded-xl"><div><b>📚 ${x.title}</b><div class="text-xs text-slate-500">${x.type} • Tahun ${x.year}</div></div><button onclick="deleteResource('${x.id}')" class="px-3 py-2 bg-red-100 text-red-700 rounded-lg font-bold">Hapus</button></div>`));(g.data||[]).forEach(x=>rows.push(`<div class="flex items-center justify-between gap-3 p-3 bg-amber-50 rounded-xl"><div><b>🎮 ${x.title}</b><div class="text-xs text-slate-500">Tahun ${x.year}</div></div><button onclick="deleteGame('${x.id}')" class="px-3 py-2 bg-red-100 text-red-700 rounded-lg font-bold">Hapus</button></div>`));$('manageList').innerHTML=rows.join('')||'<p class="text-sm text-slate-500">Belum ada kandungan.</p>'}
+let manageData={res:[],game:[]},manageGrade={res:'all',game:'all'};
+async function loadManageList(){
+  if(!sb||!user)return;
+  const [r,g]=await Promise.all([
+    sb.from('resources').select('id,title,type,year,subject,created_at').order('created_at',{ascending:false}).limit(200),
+    sb.from('games').select('id,title,year,subject,emoji,created_at').order('created_at',{ascending:false}).limit(200)
+  ]);
+  manageData.res=r.data||[];manageData.game=g.data||[];
+  renderManageList('res');renderManageList('game');
+}
+const TYPE_LABEL={textbook:'Buku Teks',activity:'Buku Aktiviti',video:'Video',worksheet:'Latihan',reference:'Rujukan'};
+function renderManageList(kind){
+  const isRes=kind==='res',list=$(isRes?'manageResList':'manageGameList'),grade=manageGrade[kind];
+  const rows=manageData[kind].filter(x=>grade==='all'||String(x.year)===grade);
+  list.innerHTML=rows.map(x=>`<div class="flex items-center justify-between gap-3 p-3 ${isRes?'bg-slate-50':'bg-amber-50'} rounded-xl"><div class="min-w-0"><b class="block truncate">${isRes?'📚':escapeHtml(x.emoji||'🎮')} ${escapeHtml(x.title)}</b><div class="text-xs text-slate-500">${isRes?escapeHtml(TYPE_LABEL[x.type]||x.type)+' • ':''}${escapeHtml(x.subject||'')} • Tahun ${escapeHtml(x.year)}</div></div><button onclick="${isRes?'deleteResource':'deleteGame'}('${x.id}')" class="shrink-0 px-3 py-2 bg-red-100 text-red-700 rounded-lg font-bold">Hapus</button></div>`).join('')||`<p class="text-sm text-slate-500 text-center p-5">${isRes?'Tiada bahan':'Tiada interaktif'}${grade==='all'?'':' untuk Darjah '+grade}.</p>`;
+}
+function setupGradeFilter_(id,kind){
+  const el=$(id);
+  el.innerHTML='<span class="text-sm font-black text-slate-700">Darjah:</span>'+['all',1,2,3,4,5,6].map(g=>`<button type="button" class="mg px-3 py-2 rounded-xl font-bold ${g==='all'?'bg-emerald-600 text-white':'bg-slate-100 text-slate-800'}" data-g="${g}">${g==='all'?'Semua':g}</button>`).join('');
+  el.querySelectorAll('.mg').forEach(b=>b.onclick=()=>{
+    manageGrade[kind]=b.dataset.g;
+    el.querySelectorAll('.mg').forEach(x=>x.className='mg px-3 py-2 rounded-xl font-bold '+(x===b?'bg-emerald-600 text-white':'bg-slate-100 text-slate-800'));
+    renderManageList(kind);
+  });
+}
 async function deleteResource(id){if(!confirm('Hapus bahan ini?'))return;const {error}=await sb.from('resources').delete().eq('id',id);if(error)return toast(error.message);await loadFromSupabase();await loadManageList();toast('Bahan dihapus.')}
 async function deleteGame(id){if(!confirm('Hapus permainan ini?'))return;const {error}=await sb.from('games').delete().eq('id',id);if(error)return toast(error.message);await loadFromSupabase();await loadManageList();toast('Permainan dihapus.')}
 async function loadAdminTeachers(){
@@ -339,7 +363,244 @@ $('teacherAdminForm').onsubmit=async e=>{
 };
 $('refreshTeachersBtn').onclick=loadAdminTeachers;
 $('teacherAdminSearch').oninput=renderAdminTeachers;
-$('refreshBtn').onclick=()=>{loadFromSupabase();loadManageList()};
+document.querySelectorAll('.refresh-manage').forEach(b=>b.onclick=()=>{loadFromSupabase();loadManageList()});
+/* ===== ZON GURU: TAB, SUBJEK, PRATONTON & SENARAI PROMPT ===== */
+var SUBJECTS=['Bahasa Melayu','English','Mathematic','Science','Pendidikan Jasmani','Pendidikan Kesihatan','Pendidikan Seni Visual','Sejarah','Reka Bentuk dan Teknologi','Bahasa Arab','Pendidikan Islam','Tasmik'];
+document.querySelectorAll('.subject-select').forEach(sel=>{sel.insertAdjacentHTML('beforeend',SUBJECTS.map(x=>`<option>${x}</option>`).join(''))});
+
+var activeTeacherTab='tabBahan';
+function showTeacherTab(tab){
+  if(tab==='tabAdmin'&&!isAdmin)tab='tabBahan';
+  if(!$(tab))tab='tabBahan';
+  activeTeacherTab=tab;
+  document.querySelectorAll('.tpane').forEach(p=>p.classList.toggle('hidden',p.id!==tab));
+  document.querySelectorAll('.ttab').forEach(b=>{const on=b.dataset.tab===tab;b.classList.toggle('active',on);b.setAttribute('aria-selected',on)});
+  try{localStorage.setItem('smarthub_teacher_tab',tab)}catch(_){}
+}
+document.querySelectorAll('.ttab').forEach(b=>b.onclick=()=>showTeacherTab(b.dataset.tab));
+try{activeTeacherTab=localStorage.getItem('smarthub_teacher_tab')||'tabBahan'}catch(_){}
+showTeacherTab(activeTeacherTab==='tabAdmin'?'tabBahan':activeTeacherTab);
+setupGradeFilter_('manageResGrades','res');
+setupGradeFilter_('manageGameGrades','game');
+
+$('gamePreviewBtn').onclick=()=>{
+  const html=$('gameHtml').value.trim();
+  if(!html){$('gameMsg').textContent='Tampal kod HTML dahulu untuk pratonton.';return}
+  $('pdfViewer').classList.add('hidden');$('videoViewer').classList.add('hidden');$('gameViewer').classList.remove('hidden');
+  $('pdfClose').classList.add('hidden');$('videoClose').classList.add('hidden');$('closeViewer').classList.remove('hidden');
+  $('viewerFrame').src='';$('viewerFrame').srcdoc=html;$('viewer').classList.remove('hidden');document.body.style.overflow='hidden';
+};
+$('gotoGamePrompt').onclick=()=>{showTeacherTab('tabPrompt');setPromptCat('interaktif');window.scrollTo({top:0,behavior:'smooth'})};
+
+/* ---------- Senarai Prompt ---------- */
+var PROMPT_CATS=[
+  {id:'interaktif',label:'🎮 Interaktif & Game'},
+  {id:'rph',label:'🗒️ RPH'},
+  {id:'latihan',label:'📝 Latihan & Soalan'},
+  {id:'pentaksiran',label:'📊 Pentaksiran (PBD)'},
+  {id:'nota',label:'📚 Nota & Bahan'},
+  {id:'pentadbiran',label:'🏫 Pentadbiran & Surat'},
+  {id:'lain',label:'✨ Lain-lain'}
+];
+var catLabel=id=>(PROMPT_CATS.find(c=>c.id===id)||{label:'✨ Lain-lain'}).label;
+
+var STARTER_PROMPTS=[
+{id:'s1',category:'interaktif',title:'Jana permainan interaktif (single-file HTML)',prompt_text:`Anda ialah pembangun permainan pendidikan untuk murid sekolah rendah di Malaysia.
+
+Bina SATU fail HTML lengkap (HTML + CSS + JavaScript dalam satu fail, tanpa fail luar) untuk permainan interaktif:
+- Mata pelajaran: [MATA PELAJARAN]
+- Tahun: [TAHUN]
+- Tajuk / topik: [TAJUK]
+- Jenis permainan: [cth: padan pasangan / seret dan lepas / teka gambar / roda bertuah]
+- Bahasa paparan: [Bahasa Melayu / English / Arab]
+
+Keperluan:
+1. Sesuai untuk Smartboard (skrin landskap, butang besar, mudah disentuh).
+2. Warna ceria, fon besar dan mudah dibaca murid.
+3. Ada skor, bunyi atau animasi ringkas apabila betul/salah.
+4. Ada butang "Main Semula".
+5. Sekurang-kurangnya [10] soalan/item berdasarkan DSKP.
+6. Tidak memerlukan internet selepas dibuka.
+
+Berikan kod penuh sahaja dalam satu blok kod supaya saya boleh salin terus.`},
+{id:'s2',category:'interaktif',title:'Kuiz aneka pilihan dengan pemasa',prompt_text:`Bina satu fail HTML tunggal (HTML, CSS dan JS dalam satu fail) untuk kuiz aneka pilihan:
+- Mata pelajaran: [MATA PELAJARAN]
+- Tahun: [TAHUN]
+- Topik: [TOPIK]
+- Bilangan soalan: [10]
+- Masa setiap soalan: [20] saat
+
+Ciri-ciri:
+- Satu soalan dipaparkan pada satu masa dengan 4 pilihan jawapan (butang besar).
+- Tunjuk jawapan betul dengan warna hijau dan salah dengan warna merah.
+- Bar masa yang berkurang dan skor di bahagian atas.
+- Skrin keputusan di akhir dengan bintang (1–3) dan butang "Cuba Lagi".
+- Rekaan ceria untuk murid sekolah rendah dan sesuai untuk Smartboard.
+
+Berikan kod penuh sahaja.`},
+{id:'s3',category:'rph',title:'RPH harian ringkas',prompt_text:`Sediakan Rancangan Pengajaran Harian (RPH) berdasarkan KSSR (Semakan) untuk:
+- Mata pelajaran: [MATA PELAJARAN]
+- Tahun: [TAHUN]
+- Tarikh / masa: [TARIKH], [MASA] ([60] minit)
+- Tajuk: [TAJUK]
+- Standard Kandungan: [SK]
+- Standard Pembelajaran: [SP]
+
+Sertakan:
+1. Objektif pembelajaran (boleh diukur).
+2. Kriteria kejayaan.
+3. Set induksi (5 minit).
+4. Aktiviti utama berpusatkan murid (PAK21).
+5. Penutup dan refleksi.
+6. Elemen merentas kurikulum (EMK) dan nilai murni.
+7. Bahan bantu mengajar.
+8. Cadangan aktiviti pengayaan dan pemulihan.
+
+Tulis dalam format jadual yang ringkas.`},
+{id:'s4',category:'latihan',title:'Lembaran kerja 3 aras',prompt_text:`Bina lembaran kerja untuk murid [TAHUN] bagi mata pelajaran [MATA PELAJARAN], topik [TOPIK].
+
+Bahagikan kepada 3 aras:
+- Aras 1 (Asas): [5] soalan mudah untuk murid lemah.
+- Aras 2 (Sederhana): [5] soalan aplikasi.
+- Aras 3 (Mencabar/KBAT): [3] soalan pemikiran aras tinggi.
+
+Sertakan ruang nama, kelas dan tarikh di atas, arahan ringkas setiap bahagian, dan skema jawapan di bahagian akhir (berasingan).`},
+{id:'s5',category:'latihan',title:'Soalan KBAT berdasarkan topik',prompt_text:`Hasilkan [5] soalan KBAT untuk murid [TAHUN], mata pelajaran [MATA PELAJARAN], topik [TOPIK].
+
+Untuk setiap soalan nyatakan:
+- Aras taksonomi Bloom (mengaplikasi / menganalisis / menilai / mencipta)
+- Situasi kehidupan harian yang dekat dengan murid di Malaysia
+- Cadangan jawapan / skema pemarkahan ringkas
+
+Gunakan bahasa yang mudah difahami murid sekolah rendah.`},
+{id:'s6',category:'pentaksiran',title:'Rubrik PBD Tahap Penguasaan 1–6',prompt_text:`Sediakan rubrik Pentaksiran Bilik Darjah (PBD) untuk:
+- Mata pelajaran: [MATA PELAJARAN]
+- Tahun: [TAHUN]
+- Standard Pembelajaran: [SP]
+- Aktiviti / tugasan: [AKTIVITI]
+
+Bina jadual Tahap Penguasaan 1 hingga 6 dengan tafsiran umum dan deskriptor khusus untuk tugasan ini, serta contoh evidens yang boleh dikumpul oleh guru bagi setiap tahap.`},
+{id:'s7',category:'nota',title:'Nota ringkas & peta minda untuk murid',prompt_text:`Ringkaskan topik [TOPIK] dalam mata pelajaran [MATA PELAJARAN] untuk murid [TAHUN].
+
+Sediakan:
+1. Nota ringkas dalam bentuk poin (bahasa mudah, ayat pendek).
+2. [5] istilah penting beserta maksud.
+3. Rangka peta minda (topik utama → cabang → contoh).
+4. [3] soalan semakan kendiri di akhir.`},
+{id:'s8',category:'pentadbiran',title:'Surat makluman kepada ibu bapa',prompt_text:`Tulis surat makluman rasmi kepada ibu bapa/penjaga murid [TAHUN/KELAS] daripada [NAMA SEKOLAH] berkenaan:
+- Perkara: [PERKARA, cth: lawatan sambil belajar / program kecemerlangan]
+- Tarikh dan masa: [TARIKH], [MASA]
+- Tempat: [TEMPAT]
+- Bayaran / bawaan (jika ada): [BUTIRAN]
+- Tarikh akhir maklum balas: [TARIKH AKHIR]
+
+Gunakan format surat rasmi sekolah dalam Bahasa Melayu dan sertakan keratan jawapan di bahagian bawah.`},
+{id:'s9',category:'rph',title:'Idea aktiviti PAK21 untuk satu tajuk',prompt_text:`Cadangkan [5] aktiviti PAK21 untuk mengajar [TAJUK] kepada murid [TAHUN] ([BILANGAN] orang, kelas [ARAS: lemah/sederhana/cemerlang]).
+
+Untuk setiap aktiviti berikan: nama aktiviti (cth: Gallery Walk, Think-Pair-Share, Round Robin), langkah pelaksanaan, anggaran masa, bahan diperlukan dan cara mentaksir murid.`}
+];
+
+var dbPrompts=[],promptCat='all',promptReady=false;
+function setPromptCat(c){promptCat=c;renderPromptCats();renderPrompts()}
+function renderPromptCats(){
+  const cats=[{id:'all',label:'Semua'},...PROMPT_CATS];
+  $('promptCats').innerHTML=cats.map(c=>`<button type="button" data-c="${c.id}" class="pc shrink-0 px-4 py-2 rounded-xl font-bold ${c.id===promptCat?'bg-slate-900 text-white':'bg-white/80 text-slate-800'}">${c.label}</button>`).join('');
+  $('promptCats').querySelectorAll('.pc').forEach(b=>b.onclick=()=>setPromptCat(b.dataset.c));
+}
+$('promptCategory').innerHTML=PROMPT_CATS.map(c=>`<option value="${c.id}">${c.label}</option>`).join('');
+
+function highlightPh_(text){return escapeHtml(text).replace(/\[([^\]\n]{1,60})\]/g,'<span class="ph">[$1]</span>')}
+function canEditPrompt_(p){return !p.starter&&user&&(isAdmin||String(p.author_email||'').toLowerCase()===String(user.email||'').toLowerCase())}
+function allPrompts_(){return [...dbPrompts,...STARTER_PROMPTS.map(p=>({...p,starter:true,author_name:'SMART HUB'}))]}
+
+function renderPrompts(){
+  const q=($('promptSearch').value||'').toLowerCase().trim();
+  const rows=allPrompts_().filter(p=>(promptCat==='all'||p.category===promptCat)&&`${p.title} ${p.prompt_text} ${p.subject||''}`.toLowerCase().includes(q));
+  $('promptGrid').innerHTML=rows.map(p=>`<article class="bg-white rounded-3xl shadow border-2 ${p.starter?'border-amber-100':'border-emerald-100'} p-4 flex flex-col gap-3">
+    <div class="flex flex-wrap gap-1.5 items-center">
+      <span class="text-[11px] font-black px-2 py-1 rounded-full bg-amber-100 text-amber-900">${escapeHtml(catLabel(p.category))}</span>
+      ${p.subject?`<span class="text-[11px] font-black px-2 py-1 rounded-full bg-emerald-100 text-emerald-800">${escapeHtml(p.subject)}</span>`:''}
+      ${p.year?`<span class="text-[11px] font-black px-2 py-1 rounded-full bg-slate-100 text-slate-700">Tahun ${escapeHtml(p.year)}</span>`:''}
+      ${p.starter?'<span class="text-[11px] font-black px-2 py-1 rounded-full bg-slate-900 text-amber-300">⭐ Asas</span>':''}
+    </div>
+    <h4 class="font-black font-display text-lg leading-snug">${escapeHtml(p.title)}</h4>
+    <div class="prompt-body bg-slate-50 rounded-xl p-3 font-mono text-slate-700" id="pb-${p.id}">${highlightPh_(p.prompt_text)}</div>
+    <div class="flex gap-2 mt-auto">
+      <button type="button" onclick="copyPrompt('${p.id}',this)" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-black"><i class="fa-solid fa-copy mr-1"></i> Salin Prompt</button>
+      <button type="button" onclick="togglePrompt('${p.id}',this)" class="px-4 bg-slate-100 rounded-xl font-bold">Lihat</button>
+    </div>
+    <div class="flex items-center justify-between gap-2 text-[11px] text-slate-500">
+      <span class="truncate">oleh <b>${escapeHtml(p.author_name||'Guru')}</b>${p.starter?'':` • ${Number(p.copy_count||0)} kali disalin`}</span>
+      ${canEditPrompt_(p)?`<span class="flex gap-1 shrink-0"><button type="button" onclick="editPrompt('${p.id}')" class="px-2 py-1 bg-slate-100 rounded-lg font-bold" style="min-height:0">Edit</button><button type="button" onclick="deletePrompt('${p.id}')" class="px-2 py-1 bg-red-100 text-red-700 rounded-lg font-bold" style="min-height:0">Hapus</button></span>`:''}
+    </div>
+  </article>`).join('')||'<div class="col-span-full p-10 text-center bg-white rounded-3xl">Tiada prompt dijumpai.</div>';
+}
+function togglePrompt(id,btn){const el=$('pb-'+id);if(!el)return;const open=el.classList.toggle('open');btn.textContent=open?'Tutup':'Lihat'}
+
+async function copyText_(text){
+  try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);return true}}catch(_){}
+  const ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;top:0;left:0;opacity:0';
+  document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,text.length);
+  let ok=false;try{ok=document.execCommand('copy')}catch(_){}
+  ta.remove();return ok;
+}
+async function copyPrompt(id,btn){
+  const p=allPrompts_().find(x=>String(x.id)===String(id));if(!p)return;
+  const ok=await copyText_(p.prompt_text);
+  if(!ok){toast('Gagal menyalin. Tekan "Lihat" dan salin secara manual.');return}
+  const old=btn.innerHTML;btn.innerHTML='<i class="fa-solid fa-check mr-1"></i> Disalin!';btn.classList.replace('bg-emerald-600','bg-slate-900');
+  setTimeout(()=>{btn.innerHTML=old;btn.classList.replace('bg-slate-900','bg-emerald-600')},1800);
+  toast('Prompt disalin. Tampal ke ChatGPT / Gemini / Claude.');
+  if(!p.starter&&sb){p.copy_count=Number(p.copy_count||0)+1;sb.rpc('increment_prompt_copy',{prompt_id:p.id}).then(()=>{},()=>{})}
+}
+
+async function loadPrompts(){
+  renderPromptCats();
+  if(!sb||!user){renderPrompts();return}
+  const {data,error}=await sb.from('prompts').select('*').order('created_at',{ascending:false});
+  if(error){
+    console.warn('Prompt:',error);
+    $('promptNotice').textContent='Prompt kongsi belum tersedia. Admin perlu jalankan SMART_HUB_PROMPTS.sql di Supabase. Prompt asas di bawah masih boleh disalin.';
+    $('promptNotice').classList.remove('hidden');promptReady=false;dbPrompts=[];
+  }else{$('promptNotice').classList.add('hidden');promptReady=true;dbPrompts=data||[]}
+  renderPrompts();
+}
+
+function openPromptForm_(p){
+  $('promptForm').classList.remove('hidden');
+  $('promptFormTitle').textContent=p?'✏️ Edit Prompt':'✍️ Kongsi Prompt Baharu';
+  $('promptId').value=p?p.id:'';$('promptTitle').value=p?p.title:'';$('promptCategory').value=p?p.category:(promptCat!=='all'?promptCat:'interaktif');
+  $('promptSubject').value=p?.subject||'';$('promptYear').value=p?.year||'';$('promptText').value=p?p.prompt_text:'';$('promptMsg').textContent='';
+  $('promptTitle').focus();$('promptForm').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function closePromptForm_(){$('promptForm').reset();$('promptForm').classList.add('hidden')}
+$('promptNewBtn').onclick=()=>{if(!promptReady){toast('Jadual prompt belum disediakan di Supabase.');return}openPromptForm_(null)};
+$('promptCancelBtn').onclick=closePromptForm_;
+function editPrompt(id){const p=dbPrompts.find(x=>String(x.id)===String(id));if(p)openPromptForm_(p)}
+async function deletePrompt(id){
+  if(!confirm('Hapus prompt ini?'))return;
+  const {error}=await sb.from('prompts').delete().eq('id',id);
+  if(error)return toast(error.message);
+  await loadPrompts();toast('Prompt dihapus.');
+}
+$('promptForm').onsubmit=async e=>{
+  e.preventDefault();if(!sb||!user)return;
+  const id=$('promptId').value;
+  const payload={title:$('promptTitle').value.trim(),category:$('promptCategory').value,subject:$('promptSubject').value||null,year:$('promptYear').value||null,prompt_text:$('promptText').value.trim(),updated_at:new Date().toISOString()};
+  if(!payload.title||!payload.prompt_text){$('promptMsg').textContent='Isi tajuk dan prompt.';return}
+  $('promptMsg').textContent='Menyimpan...';
+  let res;
+  if(id)res=await sb.from('prompts').update(payload).eq('id',id);
+  else{
+    const meta=user.user_metadata||{};
+    res=await sb.from('prompts').insert({...payload,author_email:String(user.email||'').toLowerCase(),author_name:meta.full_name||meta.name||String(user.email||'').split('@')[0]});
+  }
+  if(res.error){$('promptMsg').textContent=res.error.message;return}
+  closePromptForm_();await loadPrompts();toast(id?'Prompt dikemas kini.':'Prompt dikongsi. Terima kasih!');
+};
+$('promptSearch').oninput=renderPrompts;
+renderPromptCats();renderPrompts();
+
 if(sb){const statusEl=$('supabaseStatus');if(statusEl){statusEl.textContent=' • Supabase disambungkan';statusEl.className='text-[10px] font-bold text-emerald-600'}sb.auth.getSession().then(async({data})=>{if(data.session?.user)await verifyTeacherAccess(data.session.user,false);else{user=null;isAdmin=false;renderTeacherState()}});sb.auth.onAuthStateChange((_e,s)=>{setTimeout(async()=>{if(s?.user)await verifyTeacherAccess(s.user,true);else{user=null;isAdmin=false;renderTeacherState()}},0)})}else renderTeacherState();
 renderResources();renderGames();loadFromSupabase();
 let deferredInstallPrompt=null;

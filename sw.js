@@ -1,4 +1,4 @@
-const CACHE='smart-hub-shell-v13';
+const CACHE='smart-hub-shell-v14';
 const SHELL=['./','./index.html','./manifest.json','./app.js','./large-upload.js','./supabase-config.js','./smart-hub-logo.png'];
 
 self.addEventListener('install',e=>{
@@ -66,7 +66,7 @@ async function patchedIndex_(request){
     }
 
     if(!html.includes('large-upload.js')){
-      html=html.replace('</body>','<script src="./large-upload.js?v=13"></script></body>');
+      html=html.replace('</body>','<script src="./large-upload.js?v=14"></script></body>');
     }
     const headers=new Headers(original.headers);
     headers.delete('content-length');
